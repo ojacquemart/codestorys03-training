@@ -9,7 +9,9 @@ object Application extends Controller {
 
   val elevator = new SimpleElevator(6, new StopStrategy())
 
-  def ping = Ok
+  def ping = Action {
+    Ok
+  }
 
   def userHasEntered = Action {
     Logger.info("User entered")
