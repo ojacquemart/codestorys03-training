@@ -3,7 +3,7 @@
 # ~~~~
 
 # Home page
-GET        /                      controllers.Application.index
+GET        /ping                  controllers.Application.ping
 
 GET        /reset                 controllers.Application.reset(cause: String)
 GET        /nextCommand           controllers.Application.nextCommand
