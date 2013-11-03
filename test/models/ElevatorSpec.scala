@@ -52,7 +52,55 @@ object ElevatorSpec extends Specification {
       elevator.needsToInverseDirection() must beTrue
     }
   }
+
+  "UpAndDownStrategy" should {
+
+    val upAndDownStrategy = new UpAndDownStrategy()
+
+    "get UP command from UP direction" in {
+      upAndDownStrategy.fromDirection(UP) must be equalTo(UpCommand)
+    }
+
+    "get DOWN command from DOWN direction" in {
+      upAndDownStrategy.fromDirection(DOWN) must be equalTo(DownCommand)
+    }
+
+    "get DOWN command when at top floor" in {
+      elevator.floor = MaxFloor - 1
+      elevator.direction = UP
+      upAndDownStrategy.getNextCommand(elevator) must be equalTo("DOWN")
+    }
+
+    "get UP command up when at bottom floor" in {
+      elevator.floor = 0
+      elevator.direction = DOWN
+      upAndDownStrategy.getNextCommand(elevator) must be equalTo("UP")
+    }
+  }
   
+  "WithStopStrategy" should {
+    
+    val withStopStrategy = new WithStopStrategy()
+    val OneFloorUpStop = new Stop(1, 1, UP)
+    
+    "add a stop" in {
+      withStopStrategy.stops.size must be equalTo(0)
+      withStopStrategy.addStop(OneFloorUpStop)
+      withStopStrategy.stops.size must be equalTo(1)
+    }
+    
+    "handle a stop in opening doors and closing doors" in {
+      elevator.floor = 1
+      withStopStrategy.addStop(OneFloorUpStop)
+
+      withStopStrategy.getNextCommand(elevator) must be equalTo("OPEN")
+      withStopStrategy.stops.size must be equalTo(0)
+
+      withStopStrategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      withStopStrategy.getNextCommand(elevator) must be equalTo("UP")
+    }
+  }
+
   "Nothing command" should {
     "do nothing" in {
       NothingCommand.to(elevator) must be equalTo("NOTHING")
