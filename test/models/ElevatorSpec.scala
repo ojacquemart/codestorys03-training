@@ -52,6 +52,12 @@ object ElevatorSpec extends Specification {
       elevator.needsToInverseDirection() must beTrue
     }
   }
+  
+  "Nothing command" should {
+    "do nothing" in {
+      NothingCommand.to(elevator) must be equalTo("NOTHING")
+    }
+  }
 
   "Up command" should {
 
@@ -69,11 +75,6 @@ object ElevatorSpec extends Specification {
     }
   }
 
-  "Nothing command" should {
-    "do nothing" in {
-      NothingCommand.to(elevator) must be equalTo("NOTHING")
-    }
-  }
 
   "Down command" should {
 
