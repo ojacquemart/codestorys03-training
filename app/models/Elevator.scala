@@ -68,7 +68,7 @@ class UpAndDownStrategy extends Strategy {
 
 }
 
-class StopStrategy extends UpAndDownStrategy {
+class WithStopStrategy extends UpAndDownStrategy {
 
   var stops: Set[Stop] = Set()
 
@@ -76,7 +76,7 @@ class StopStrategy extends UpAndDownStrategy {
 
   override def getNextCommand(elevator: DefaultElevator): String = {
     Logger.debug(s"Stops = $stops")
-    val maybeStop =  stops.find(stop => stop.toFloor == elevator.floor)
+    val maybeStop = stops.find(stop => stop.toFloor == elevator.floor)
 
     if (maybeStop.isDefined) {
       Logger.info("Remove " + maybeStop.get)
@@ -146,6 +146,7 @@ trait Direction {
 
   def inverse: Direction = if (name == "UP") DOWN else UP
 
+  override def toString: String = name
 }
 
 object UP extends Direction {
