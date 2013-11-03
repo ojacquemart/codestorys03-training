@@ -39,7 +39,7 @@ object Application extends Controller {
   }
 
   def nextCommand = Action {
-    val nextCommand = elevator.nextCommand()
+    val nextCommand = elevator.getNextCommand()
 
     Ok(nextCommand)
   }

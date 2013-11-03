@@ -9,7 +9,7 @@ trait DefaultElevator {
   var direction: Direction = UP
   var opened: Boolean = false
 
-  def needsToChangeDirection(): Boolean = (direction == UP && isAtTop) || (direction == DOWN && isAtBottom)
+  def needsToInverseDirection(): Boolean = (direction == UP && isAtTop) || (direction == DOWN && isAtBottom)
 
   def isAtTop: Boolean = floor == maxFloor - 1
   def isAtBottom: Boolean = floor == 0
@@ -23,7 +23,7 @@ trait DefaultElevator {
 
 case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends DefaultElevator {
 
-  def nextCommand() = strategy.nextCommand(this)
+  def getNextCommand() = strategy.getNextCommand(this)
 
   def gotTo(toFloor: Int) = {
     strategy.addStop(new Stop(floor, toFloor, upOrDown(floor, toFloor)))
@@ -47,7 +47,7 @@ case class Stop(fromFloor: Int, toFloor: Int, direction: Direction ) {
 
 trait Strategy {
 
-  def nextCommand(elevator: DefaultElevator): String
+  def getNextCommand(elevator: DefaultElevator): String
 
   def addStop(stop: Stop) = {}
 }
@@ -59,8 +59,8 @@ class UpAndDownStrategy extends Strategy {
     else DownCommand
   }
 
-  def nextCommand(elevator: DefaultElevator): String = {
-    val direction = if (elevator.needsToChangeDirection()) elevator.direction.not else elevator.direction
+  def getNextCommand(elevator: DefaultElevator): String = {
+    val direction = if (elevator.needsToInverseDirection()) elevator.direction.inverse else elevator.direction
 
     Logger.info(s"Current floor ${elevator.floor}")
     fromDirection(direction).to(elevator)
@@ -74,7 +74,7 @@ class StopStrategy extends UpAndDownStrategy {
 
   override def addStop(stop: Stop) = stops += stop
 
-  override def nextCommand(elevator: DefaultElevator): String = {
+  override def getNextCommand(elevator: DefaultElevator): String = {
     Logger.debug(s"Stops = $stops")
     val maybeStop =  stops.find(stop => stop.toFloor == elevator.floor)
 
@@ -87,7 +87,7 @@ class StopStrategy extends UpAndDownStrategy {
     }
     if (elevator.opened) return CloseCommand.to(elevator)
 
-    return super.nextCommand(elevator)
+    return super.getNextCommand(elevator)
   }
 }
 
@@ -137,14 +137,14 @@ object CloseCommand extends Command {
       elevator.opened = false
       "CLOSE"
     }
-    else DownCommand.to(elevator)
+    else NothingCommand.to(elevator)
   }
 }
 
 trait Direction {
   def name: String
 
-  def not: Direction = if (name == "UP") DOWN else UP
+  def inverse: Direction = if (name == "UP") DOWN else UP
 
 }
 
