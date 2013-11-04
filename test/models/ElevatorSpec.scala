@@ -1,22 +1,18 @@
 package models
 
 import org.specs2.mutable.Specification
-import org.specs2.matcher.MatchResult
 
 object ElevatorSpec extends Specification {
 
-  val MaxFloor = 6
+  val MaxFloor = 21
   val elevator = new SimpleElevator(MaxFloor, new UpAndDownStrategy())
 
   "Elevator" should {
-    def assertDefaultElevator: MatchResult[Boolean] = {
+
+    "get default values" in {
       elevator.floor should be equalTo (0)
       elevator.direction should be equalTo (UP)
       elevator.opened should beFalse
-    }
-
-    "get default values" in {
-      assertDefaultElevator
     }
 
     "reset values" in {
@@ -24,12 +20,21 @@ object ElevatorSpec extends Specification {
       elevator.direction = DOWN
       elevator.opened = true
 
-      elevator.reset
+      elevator.reset(0)
 
-      assertDefaultElevator
+      elevator.floor should be equalTo (0)
+      elevator.direction should be equalTo (UP)
+      elevator.opened should beFalse
+    }
+
+    "reset lower floor" in {
+      elevator.floor = 2
+      elevator.reset(10)
+      elevator.floor must be equalTo(10)
     }
 
     "check if is at bottom floor" in {
+      elevator.floor = 0
       elevator.isAtBottom must beTrue
       elevator.floor = 1
       elevator.isAtBottom must beFalse

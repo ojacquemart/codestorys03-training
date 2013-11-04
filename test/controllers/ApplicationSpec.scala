@@ -29,15 +29,11 @@ class ApplicationSpec extends Specification {
     }
 
     "send 200 on reset" in new WithApplication {
-      assert200("/reset?cause=Bad+request")
+      assert200("/reset?lowerFloor=0&higherFloor=19&cause=Bad+request")
     }
     "send 200 on nextCommand" in new WithApplication {
       val result = assert200("/nextCommand")
       contentAsString(result) must be equalTo("UP")
-    }
-
-    "send 200 on call" in new WithApplication {
-      assert200("/reset?cause=Bad+request")
     }
     "send 200 on call" in new WithApplication {
       assert200("/call?atFloor=1&to=UP")

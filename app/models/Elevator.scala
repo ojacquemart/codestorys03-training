@@ -14,8 +14,8 @@ trait DefaultElevator {
   def isAtTop: Boolean = floor == maxFloor - 1
   def isAtBottom: Boolean = floor == 0
 
-  def reset = {
-    floor = 0
+  def reset(lowerFloor: Int) = {
+    floor = lowerFloor
     direction = UP
     opened = false
   }

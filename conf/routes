@@ -5,13 +5,13 @@
 # Home page
 GET        /ping                  controllers.Application.ping
 
-GET        /reset                 controllers.Application.reset(cause: String)
-GET        /nextCommand           controllers.Application.nextCommand
+GET        /reset                 controllers.Application.reset(lowerFloor: Int, higherFloor: Int, cause: String)
 GET        /call                  controllers.Application.call(atFloor: Int, to: String)
 GET        /go                    controllers.Application.go(floorToGo: Int)
-
 GET        /userHasEntered        controllers.Application.userHasEntered
 GET        /userHasExited         controllers.Application.userHasExited
+
+GET        /nextCommand           controllers.Application.nextCommand
 
 
 # Map static resources from the /public folder to the /assets URL path
