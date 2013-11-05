@@ -94,7 +94,7 @@ class UpAndDownStrategy extends Strategy {
     }
   }
 
-  def canDoNothing(elevator: DefaultElevator) = stops.isEmpty && elevator.isAtMiddle
+  def canDoNothing(elevator: DefaultElevator) = elevator.isAtMiddle && stops.isEmpty
 
   def findBestDirection(direction: Direction) = {
     if (stops.isEmpty) direction
