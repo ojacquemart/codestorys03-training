@@ -26,6 +26,8 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends DefaultElev
 
   def getNextCommand() = strategy.getNextCommand(this)
 
+  def getStops() = strategy.stops
+
   def gotTo(toFloor: Int) = {
     strategy.addStop(new Stop(floor, toFloor, upOrDown(floor, toFloor)))
   }
@@ -39,7 +41,7 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends DefaultElev
 }
 
 case class Stop(from: Int, to: Int, direction: Direction ) {
-  Logger.info(s"new Stop(fom: $from, to: $to, direction: $direction")
+  Logger.debug(s"New stop(fom: $from, to: $to, direction: $direction")
 
   override def hashCode(): Int = to
 
@@ -73,7 +75,7 @@ class UpAndDownStrategy extends Strategy {
   }
 
   def getNextCommand(elevator: DefaultElevator): String = {
-    Logger.info(s"Current floor ${elevator.floor}")
+    Logger.info(s"nextCommand, currentFloor beforeAction: ${elevator.floor}")
 
     val needsToInverseDirection = elevator.needsToInverseDirection()
     if (needsToInverseDirection) {
@@ -112,11 +114,11 @@ class UpAndDownStrategy extends Strategy {
 class WithStopStrategy extends UpAndDownStrategy {
 
   override def getNextCommand(elevator: DefaultElevator): String = {
-    Logger.debug(s"Stops = $stops")
+    Logger.debug(s"Current stops: $stops")
     val maybeStop = stops.find(stop => stop.to == elevator.floor)
 
     if (maybeStop.isDefined) {
-      Logger.info(s"Remove ${maybeStop.get}")
+      Logger.debug(s"Remove stop ${maybeStop.get}")
       stops -= maybeStop.get
       if (!elevator.opened) {
         return OpenCommand.to(elevator)
