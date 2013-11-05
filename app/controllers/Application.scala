@@ -7,7 +7,7 @@ import models._
 
 object Application extends Controller {
 
-  val elevator = new SimpleElevator(21, new WithStopStrategy())
+  val elevator = new SimpleElevator(20, new WithStopStrategy())
 
   def ping = Action {
     Ok

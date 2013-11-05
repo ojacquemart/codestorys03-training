@@ -4,7 +4,7 @@ import org.specs2.mutable.Specification
 
 object ElevatorSpec extends Specification {
 
-  val MaxFloor = 21
+  val MaxFloor = 20
   val elevator = new SimpleElevator(MaxFloor, new UpAndDownStrategy())
 
   "Elevator" should {
