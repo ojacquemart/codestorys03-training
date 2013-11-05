@@ -46,6 +46,12 @@ object ElevatorSpec extends Specification {
       elevator.isAtTop must beTrue
     }
 
+    "check if is at the middle floor" in {
+      elevator.isAtMiddle must beFalse
+      elevator.floor = 10
+      elevator.isAtMiddle must beTrue
+    }
+
     "check if needs to change current direction" in {
       elevator.floor = 1
       elevator.direction = UP
@@ -61,6 +67,21 @@ object ElevatorSpec extends Specification {
   "UpAndDownStrategy" should {
 
     val upAndDownStrategy = new UpAndDownStrategy()
+
+    "reset stops" in {
+      upAndDownStrategy.addStop(new Stop(1, 1, UP))
+      upAndDownStrategy.stops.size must be equalTo(1)
+
+      upAndDownStrategy.reset
+      upAndDownStrategy.stops.size must be equalTo(0)
+    }
+
+    "can do nothing" in {
+      elevator.floor = 10
+
+      upAndDownStrategy.reset
+      upAndDownStrategy.canDoNothing(elevator) must beTrue
+    }
 
     "get UP command from UP direction" in {
       upAndDownStrategy.fromDirection(UP) must be equalTo(UpCommand)
@@ -81,26 +102,37 @@ object ElevatorSpec extends Specification {
       elevator.direction = DOWN
       upAndDownStrategy.getNextCommand(elevator) must be equalTo("UP")
     }
+
+    "not move if no one is in the cabin & at the middle floor" in {
+      elevator.reset(10)
+      upAndDownStrategy.getNextCommand(elevator) must be equalTo("NOTHING")
+
+    }
   }
   
   "WithStopStrategy" should {
     
     val withStopStrategy = new WithStopStrategy()
-    val OneFloorUpStop = new Stop(1, 1, UP)
-    
+
     "add a stop" in {
+      withStopStrategy.reset
       withStopStrategy.stops.size must be equalTo(0)
-      withStopStrategy.addStop(OneFloorUpStop)
+      withStopStrategy.addStop(new Stop(1, 1, UP))
       withStopStrategy.stops.size must be equalTo(1)
     }
     
     "handle a stop in opening doors and closing doors" in {
       elevator.floor = 1
-      withStopStrategy.addStop(OneFloorUpStop)
+      withStopStrategy.reset
+      withStopStrategy.addStop(new Stop(from = 1, to = 3, UP))
+      withStopStrategy.stops.size must be equalTo(1)
 
+      withStopStrategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(2)
+      withStopStrategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(3)
       withStopStrategy.getNextCommand(elevator) must be equalTo("OPEN")
       withStopStrategy.stops.size must be equalTo(0)
-
       withStopStrategy.getNextCommand(elevator) must be equalTo("CLOSE")
       withStopStrategy.getNextCommand(elevator) must be equalTo("UP")
     }

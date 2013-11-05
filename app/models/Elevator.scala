@@ -13,6 +13,7 @@ trait DefaultElevator {
 
   def isAtTop: Boolean = floor == maxFloor - 1
   def isAtBottom: Boolean = floor == 0
+  def isAtMiddle: Boolean = floor == maxFloor / 2
 
   def reset(lowerFloor: Int) = {
     floor = lowerFloor
@@ -30,26 +31,38 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends DefaultElev
   }
 
   private def upOrDown(current: Int, to: Int) = if (current > to) DOWN else UP
+
+  override def reset(lowerFloor: Int): Unit = {
+    super.reset(lowerFloor)
+    strategy.reset
+  }
 }
 
-case class Stop(fromFloor: Int, toFloor: Int, direction: Direction ) {
-  Logger.info(s"new Stop(fom: $fromFloor, to: $toFloor, direction: $direction")
+case class Stop(from: Int, to: Int, direction: Direction ) {
+  Logger.info(s"new Stop(fom: $from, to: $to, direction: $direction")
 
-  override def hashCode(): Int = toFloor
+  override def hashCode(): Int = to
 
   override def equals(obj: scala.Any): Boolean = obj match {
-    case other: Stop => toFloor == other.toFloor
+    case other: Stop => to == other.to
     case _ => false
   }
 
-  override def toString = toFloor.toString
+  override def toString = s"[floor=$to,to=$direction]"
 }
 
 trait Strategy {
 
+  var stops: Set[Stop] = Set()
+
   def getNextCommand(elevator: DefaultElevator): String
 
-  def addStop(stop: Stop) = {}
+  def addStop(stop: Stop) = stops += stop
+
+  def reset = {
+    stops = Set()
+  }
+
 }
 
 class UpAndDownStrategy extends Strategy {
@@ -60,26 +73,50 @@ class UpAndDownStrategy extends Strategy {
   }
 
   def getNextCommand(elevator: DefaultElevator): String = {
-    val direction = if (elevator.needsToInverseDirection()) elevator.direction.inverse else elevator.direction
-
     Logger.info(s"Current floor ${elevator.floor}")
-    fromDirection(direction).to(elevator)
+
+    val needsToInverseDirection = elevator.needsToInverseDirection()
+    if (needsToInverseDirection) {
+      Logger.debug("At top or bottom floor => inverse the direction")
+      val direction = if (needsToInverseDirection) elevator.direction.inverse else elevator.direction
+
+      fromDirection(direction).to(elevator)
+    }
+    else if (canDoNothing(elevator)) {
+      Logger.debug("Can do nothing because no stops & at the middle floor!")
+      NothingCommand.to(elevator)
+    }
+    else {
+      val bestDirection = findBestDirection(elevator.direction)
+      fromDirection(bestDirection).to(elevator)
+    }
+  }
+
+  def canDoNothing(elevator: DefaultElevator) = stops.isEmpty && elevator.isAtMiddle
+
+  def findBestDirection(direction: Direction) = {
+    if (stops.isEmpty) direction
+    else {
+      Logger.debug(s"Look for best direction $direction")
+
+      val stopsInCurrentDirection = stops.count(stop => stop.direction == direction)
+      val inverseDirection = stopsInCurrentDirection == 0
+      Logger.debug(s"\tNo stop in direction $direction => inverse direction = $inverseDirection")
+      if (inverseDirection) direction.inverse
+      else direction
+    }
   }
 
 }
 
 class WithStopStrategy extends UpAndDownStrategy {
 
-  var stops: Set[Stop] = Set()
-
-  override def addStop(stop: Stop) = stops += stop
-
   override def getNextCommand(elevator: DefaultElevator): String = {
     Logger.debug(s"Stops = $stops")
-    val maybeStop = stops.find(stop => stop.toFloor == elevator.floor)
+    val maybeStop = stops.find(stop => stop.to == elevator.floor)
 
     if (maybeStop.isDefined) {
-      Logger.info("Remove " + maybeStop.get)
+      Logger.info(s"Remove ${maybeStop.get}")
       stops -= maybeStop.get
       if (!elevator.opened) {
         return OpenCommand.to(elevator)

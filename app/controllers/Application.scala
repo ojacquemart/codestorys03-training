@@ -46,6 +46,7 @@ object Application extends Controller {
 
   def nextCommand = Action {
     val nextCommand = elevator.getNextCommand()
+    Logger.info(s"Next command=$nextCommand")
 
     Ok(nextCommand)
   }
