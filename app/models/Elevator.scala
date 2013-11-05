@@ -38,6 +38,8 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends DefaultElev
     super.reset(lowerFloor)
     strategy.reset
   }
+
+  def getStatus: String = s"floor=$floor, open=$opened, direction=$direction, stops=${getStops()}"
 }
 
 case class Stop(from: Int, to: Int, direction: Direction ) {
@@ -75,8 +77,6 @@ class UpAndDownStrategy extends Strategy {
   }
 
   def getNextCommand(elevator: DefaultElevator): String = {
-    Logger.info(s"nextCommand, currentFloor beforeAction: ${elevator.floor}")
-
     val needsToInverseDirection = elevator.needsToInverseDirection()
     if (needsToInverseDirection) {
       Logger.debug("At top or bottom floor => inverse the direction")
