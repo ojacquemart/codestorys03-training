@@ -6,6 +6,8 @@ trait DefaultElevator {
 
   var floor: Int = 0
   val maxFloor: Int
+  val middleFloor = maxFloor / 2
+
   var direction: Direction = UP
   var opened: Boolean = false
 
@@ -13,7 +15,7 @@ trait DefaultElevator {
 
   def isAtTop: Boolean = floor == maxFloor - 1
   def isAtBottom: Boolean = floor == 0
-  def isAtMiddle: Boolean = floor == maxFloor / 2
+  def isAtMiddle: Boolean = floor == middleFloor
 
   def reset(lowerFloor: Int) = {
     floor = lowerFloor
@@ -32,7 +34,7 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends DefaultElev
     strategy.addStop(new Stop(floor, toFloor, upOrDown(floor, toFloor)))
   }
 
-  private def upOrDown(current: Int, to: Int) = if (current > to) DOWN else UP
+  private def upOrDown(current: Int, to: Int) = if (current >= to) DOWN else UP
 
   override def reset(lowerFloor: Int): Unit = {
     super.reset(lowerFloor)
@@ -43,7 +45,6 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends DefaultElev
 }
 
 case class Stop(from: Int, to: Int, direction: Direction ) {
-  Logger.debug(s"New stop(fom: $from, to: $to, direction: $direction")
 
   override def hashCode(): Int = to
 
@@ -89,24 +90,35 @@ class UpAndDownStrategy extends Strategy {
       NothingCommand.to(elevator)
     }
     else {
-      val bestDirection = findBestDirection(elevator.direction)
+      val bestDirection = findBestDirection(elevator)
       fromDirection(bestDirection).to(elevator)
     }
   }
 
   def canDoNothing(elevator: DefaultElevator) = elevator.isAtMiddle && stops.isEmpty
 
-  def findBestDirection(direction: Direction) = {
-    if (stops.isEmpty) direction
-    else {
-      Logger.debug(s"Look for best direction $direction")
+  def findBestDirection(elevator: DefaultElevator) = {
+    if (stops.isEmpty) forceDirectionToMiddleFloor(elevator)
+    else findBestDirectionByCurrentDirection(elevator)
 
-      val stopsInCurrentDirection = stops.count(stop => stop.direction == direction)
-      val inverseDirection = stopsInCurrentDirection == 0
-      Logger.debug(s"\tNo stop in direction $direction => inverse direction = $inverseDirection")
-      if (inverseDirection) direction.inverse
-      else direction
-    }
+  }
+
+  def forceDirectionToMiddleFloor(elevator: DefaultElevator): Direction = {
+    Logger.debug("No stop, force replacement to the middle floor")
+    if (elevator.floor < elevator.middleFloor) UP
+    else DOWN
+  }
+
+  def findBestDirectionByCurrentDirection(elevator: DefaultElevator): Direction = {
+    val direction = elevator.direction
+    Logger.debug(s"Look if has stop in current direction: $direction")
+
+    val stopsInCurrentDirection = stops.count(stop => stop.direction == elevator.direction)
+    val keepsCurrentDirection = stopsInCurrentDirection > 0
+    Logger.debug(s"\tNo stop in direction $direction => keeps direction = $keepsCurrentDirection")
+
+    if (keepsCurrentDirection) direction
+    else direction.inverse
   }
 
 }

@@ -66,47 +66,73 @@ object ElevatorSpec extends Specification {
 
   "UpAndDownStrategy" should {
 
-    val upAndDownStrategy = new UpAndDownStrategy()
+    val strategy = new UpAndDownStrategy()
 
     "reset stops" in {
-      upAndDownStrategy.addStop(new Stop(1, 1, UP))
-      upAndDownStrategy.stops.size must be equalTo(1)
+      strategy.addStop(new Stop(1, 1, UP))
+      strategy.stops.size must be equalTo(1)
 
-      upAndDownStrategy.reset
-      upAndDownStrategy.stops.size must be equalTo(0)
+      strategy.reset
+      strategy.stops.size must be equalTo(0)
     }
 
     "can do nothing" in {
       elevator.floor = 10
 
-      upAndDownStrategy.reset
-      upAndDownStrategy.canDoNothing(elevator) must beTrue
+      strategy.reset
+      strategy.canDoNothing(elevator) must beTrue
     }
 
     "get UP command from UP direction" in {
-      upAndDownStrategy.fromDirection(UP) must be equalTo(UpCommand)
+      strategy.fromDirection(UP) must be equalTo(UpCommand)
     }
 
     "get DOWN command from DOWN direction" in {
-      upAndDownStrategy.fromDirection(DOWN) must be equalTo(DownCommand)
+      strategy.fromDirection(DOWN) must be equalTo(DownCommand)
     }
 
     "get DOWN command when at top floor" in {
       elevator.floor = MaxFloor - 1
       elevator.direction = UP
-      upAndDownStrategy.getNextCommand(elevator) must be equalTo("DOWN")
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
     }
 
     "get UP command up when at bottom floor" in {
       elevator.floor = 0
       elevator.direction = DOWN
-      upAndDownStrategy.getNextCommand(elevator) must be equalTo("UP")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
     }
 
     "not move if no one is in the cabin & at the middle floor" in {
       elevator.reset(10)
-      upAndDownStrategy.getNextCommand(elevator) must be equalTo("NOTHING")
+      strategy.getNextCommand(elevator) must be equalTo("NOTHING")
 
+    }
+    
+    "force replacement at the middle floor" in {
+      elevator.floor = 5
+      strategy.reset
+
+      strategy.forceDirectionToMiddleFloor(elevator) must be equalTo(UP)
+
+      elevator.floor = 15
+      strategy.forceDirectionToMiddleFloor(elevator) must be equalTo(DOWN)
+    }
+
+    "find best direction by current direction from up to up" in {
+      elevator.floor = 5
+      elevator.direction = UP
+      strategy.reset
+      strategy.addStop(new Stop(1, 12, UP))
+      strategy.findBestDirectionByCurrentDirection(elevator) must be equalTo(UP)
+    }
+
+    "find best direction by current direction from up to down" in {
+      elevator.floor = 15
+      elevator.direction = UP
+      strategy.reset
+      strategy.addStop(new Stop(1, 12, DOWN))
+      strategy.findBestDirectionByCurrentDirection(elevator) must be equalTo(DOWN)
     }
   }
   
