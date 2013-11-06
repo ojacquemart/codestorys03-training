@@ -15,3 +15,4 @@ Events (just respond HTTP 200 return code)
 response
 
 * /nextCommand : body of the request must contain NOTHING, UP, DOWN, OPEN or CLOSE
+
