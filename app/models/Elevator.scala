@@ -34,19 +34,16 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends DefaultElev
 
   def getNextCommand() = strategy.getNextCommand(this)
 
-  def getStops() = strategy.stops
+  def getGos() = strategy.gos
+
+  def getCalls() = strategy.calls
 
   def call(atFloor: Int, direction: Direction) {
-    strategy.stopsV2.addCall(atFloor, direction)
+    strategy.addCall(atFloor, direction)
   }
 
   def go(toFloor: Int) = {
-    strategy.stopsV2.addGo(toFloor)
-  }
-
-  @deprecated
-  def gotTo(toFloor: Int) = {
-    strategy.addStop(new Stop(floor, toFloor, upOrDown(floor, toFloor)))
+    strategy.addGo(toFloor)
   }
 
   def upOrDown(current: Int, to: Int) = if (current >= to) DOWN else UP
@@ -56,29 +53,18 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends DefaultElev
     strategy.reset
   }
 
-  def getStatus: String = s"floor=$floor, open=$opened, direction=$direction, stops=${getStops()}"
+  def getStatus: String = s"floor=$floor, open=$opened, users=$users, " +
+      s"direction=$direction, calls=${getCalls()}}, gos=${getGos()}"
 }
 
 trait SimpleStop {
   def toFloor: Int
 }
 
-case class Call(toFloor: Int, direction: Direction)
-case class Go(toFloor: Int)
+case class Call(toFloor: Int, direction: Direction) extends SimpleStop
+case class Go(toFloor: Int) extends SimpleStop {
 
-class Stops {
-
-  var calls: Set[Call] = Set()
-  var gos: Set[Go] = Set()
-
-  def addCall(atFloor: Int, direction: Direction) = {
-    calls += new Call(atFloor, direction)
-  }
-
-  def addGo(toFloor: Int) = {
-    gos += new Go(toFloor)
-  }
-
+  def currentDirection(currentFloor: Int) =  if (currentFloor >= toFloor) DOWN else UP
 }
 
 case class Stop(from: Int, to: Int, direction: Direction ) {
@@ -95,20 +81,32 @@ case class Stop(from: Int, to: Int, direction: Direction ) {
 
 trait Strategy {
 
-  val stopsV2 = new Stops
-  var stops: Set[Stop] = Set()
+  var calls: Set[Call] = Set()
+  var gos: Set[Go] = Set()
+
+  def addCall(atFloor: Int, direction: Direction) = {
+    calls += new Call(atFloor, direction)
+  }
+
+  def addGo(toFloor: Int) = {
+    gos += new Go(toFloor)
+  }
 
   def getNextCommand(elevator: DefaultElevator): String
 
-  def addStop(stop: Stop) = stops += stop
+  def addGo(go: Go) = gos += go
+  def addCall(call: Call) = calls += call
+  def canDoNothing(elevator: DefaultElevator) = elevator.isAtMiddle && hasNoCallAndGo()
+  def hasNoCallAndGo() = gos.isEmpty && calls.isEmpty
 
   def reset = {
-    stops = Set()
+    gos = Set()
+    calls = Set()
   }
 
 }
 
-class UpAndDownStrategy extends Strategy {
+class DirectionStrategy extends Strategy {
 
   def fromDirection(direction: Direction): Command = {
     if (direction == UP) UpCommand
@@ -133,10 +131,9 @@ class UpAndDownStrategy extends Strategy {
     }
   }
 
-  def canDoNothing(elevator: DefaultElevator) = elevator.isAtMiddle && stops.isEmpty
 
   def findBestDirection(elevator: DefaultElevator) = {
-    if (stops.isEmpty) forceDirectionToMiddleFloor(elevator)
+    if (hasNoCallAndGo()) forceDirectionToMiddleFloor(elevator)
     else findBestDirectionByCurrentDirection(elevator)
 
   }
@@ -151,8 +148,14 @@ class UpAndDownStrategy extends Strategy {
     val direction = elevator.direction
     Logger.debug(s"Look if has stop in current direction: $direction")
 
-    val stopsInCurrentDirection = stops.count(stop => stop.direction == elevator.direction)
-    val keepsCurrentDirection = stopsInCurrentDirection > 0
+    val gosInCurrentDirection = gos.count(go => go.currentDirection(elevator.floor) == elevator.direction)
+    def predicateCallInCurrentDirection: (Call) => Boolean = {
+      call => call.direction == elevator.direction
+    }
+    val callsInCurrentDirection = calls.count(predicateCallInCurrentDirection)
+    val remainingCalls = calls.size - callsInCurrentDirection
+
+    val keepsCurrentDirection = gosInCurrentDirection + callsInCurrentDirection + remainingCalls > 0
     Logger.debug(s"\tNo stop in direction $direction => keeps direction = $keepsCurrentDirection")
 
     if (keepsCurrentDirection) direction
@@ -161,15 +164,12 @@ class UpAndDownStrategy extends Strategy {
 
 }
 
-class WithStopStrategy extends UpAndDownStrategy {
+class OpenCloseStrategy extends DirectionStrategy {
 
   override def getNextCommand(elevator: DefaultElevator): String = {
-    Logger.debug(s"Current stops: $stops")
-    val maybeStop = stops.find(stop => stop.to == elevator.floor)
+    Logger.debug(s"Current calls=$calls, gos=$gos")
 
-    if (maybeStop.isDefined) {
-      Logger.debug(s"Remove stop ${maybeStop.get}")
-      stops -= maybeStop.get
+    if (needsStop(elevator)) {
       if (!elevator.opened) {
         return OpenCommand.to(elevator)
       }
@@ -177,6 +177,34 @@ class WithStopStrategy extends UpAndDownStrategy {
     if (elevator.opened) return CloseCommand.to(elevator)
 
     return super.getNextCommand(elevator)
+  }
+
+  def needsStop(elevator: DefaultElevator): Boolean = {
+    val neededStops = List(getStopFromFloor(elevator.floor),
+        getCallFromFloorFloorInCurrentDirection(elevator),
+        getCallWhenNoGos(elevator.floor))
+    val needsStop = neededStops.count(_.size > 0) > 0
+    Logger.debug(s"Needs stop  for $neededStops from floor ${elevator.floor} to ${elevator.direction}")
+    
+    if (needsStop) {
+      neededStops.foreach(maybeStop => maybeStop match {
+        case Some(go: Go) => gos -= go
+        case Some(call: Call) => calls -= call
+        case _ => {}
+      })
+    }
+
+    needsStop
+  }
+
+  def getStopFromFloor(floor: Int): Option[Go] = gos.find(go => go.toFloor == floor)
+
+  def getCallFromFloorFloorInCurrentDirection(elevator: DefaultElevator) =
+    calls.find(c => c.toFloor == elevator.floor && c.direction == elevator.direction)
+
+  def getCallWhenNoGos(floor: Int) = {
+    if (gos.isEmpty) calls.find(_.toFloor == floor)
+    else None
   }
 }
 

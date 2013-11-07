@@ -5,7 +5,7 @@ import org.specs2.mutable.Specification
 object ElevatorSpec extends Specification {
 
   val MaxFloor = 20
-  val elevator = new SimpleElevator(MaxFloor, new UpAndDownStrategy())
+  val elevator = new SimpleElevator(MaxFloor, new DirectionStrategy())
 
   "Elevator" should {
 
@@ -81,31 +81,19 @@ object ElevatorSpec extends Specification {
     }
   }
 
-  "Stops" should {
+  "DirectionStrategy" should {
 
-    val stops = new Stops()
-
-    "add new call" in {
-      stops.addCall(2, UP)
-      stops.calls.size must be equalTo(1)
-    }
-
-    "add new go" in {
-      stops.addGo(2)
-      stops.gos.size must be equalTo(1)
-    }
-  }
-
-  "UpAndDownStrategy" should {
-
-    val strategy = new UpAndDownStrategy()
+    val strategy = new DirectionStrategy()
 
     "reset stops" in {
-      strategy.addStop(new Stop(1, 1, UP))
-      strategy.stops.size must be equalTo(1)
+      strategy.addGo(1)
+      strategy.addCall(Call(1, UP))
+      strategy.gos.size must be equalTo(1)
+      strategy.calls.size must be equalTo(1)
 
       strategy.reset
-      strategy.stops.size must be equalTo(0)
+      strategy.gos.size must be equalTo(0)
+      strategy.calls.size must be equalTo(0)
     }
 
     "can do nothing" in {
@@ -138,7 +126,6 @@ object ElevatorSpec extends Specification {
     "not move if no one is in the cabin & at the middle floor" in {
       elevator.reset(10)
       strategy.getNextCommand(elevator) must be equalTo("NOTHING")
-
     }
     
     "force replacement at the middle floor" in {
@@ -155,7 +142,7 @@ object ElevatorSpec extends Specification {
       elevator.floor = 5
       elevator.direction = UP
       strategy.reset
-      strategy.addStop(new Stop(1, 12, UP))
+      strategy.addGo(Go(12))
       strategy.findBestDirectionByCurrentDirection(elevator) must be equalTo(UP)
     }
 
@@ -163,37 +150,143 @@ object ElevatorSpec extends Specification {
       elevator.floor = 15
       elevator.direction = UP
       strategy.reset
-      strategy.addStop(new Stop(1, 12, DOWN))
+      strategy.addGo(Go(12))
       strategy.findBestDirectionByCurrentDirection(elevator) must be equalTo(DOWN)
     }
+
   }
   
-  "WithStopStrategy" should {
+  "OpenCloseStrategy" should {
     
-    val withStopStrategy = new WithStopStrategy()
+    val strategy = new OpenCloseStrategy()
 
-    "add a stop" in {
-      withStopStrategy.reset
-      withStopStrategy.stops.size must be equalTo(0)
-      withStopStrategy.addStop(new Stop(1, 1, UP))
-      withStopStrategy.stops.size must be equalTo(1)
+    "gets stops from floor" in {
+      strategy.addGo(Go(10))
+      strategy.getStopFromFloor(10).size must be equalTo(1)
     }
-    
-    "handle a stop in opening doors and closing doors" in {
-      elevator.floor = 1
-      withStopStrategy.reset
-      withStopStrategy.addStop(new Stop(from = 1, to = 3, UP))
-      withStopStrategy.stops.size must be equalTo(1)
 
-      withStopStrategy.getNextCommand(elevator) must be equalTo("UP")
+    "get calls in current direction" in {
+      elevator.reset(5)
+      elevator.direction = DOWN
+      strategy.reset
+
+      strategy.getCallFromFloorFloorInCurrentDirection(elevator).size must be equalTo(0)
+      strategy.addCall(5, DOWN)
+      strategy.getCallFromFloorFloorInCurrentDirection(elevator).size must be equalTo(1)
+
+    }
+
+    "stops with a go at a floor" in {
+      elevator.reset(1)
+      elevator.direction = UP
+      strategy.reset
+
+      strategy.addGo(Go(3))
+      strategy.getNextCommand(elevator) must be equalTo("UP")
       elevator.floor must be equalTo(2)
-      withStopStrategy.getNextCommand(elevator) must be equalTo("UP")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
       elevator.floor must be equalTo(3)
-      withStopStrategy.getNextCommand(elevator) must be equalTo("OPEN")
-      withStopStrategy.stops.size must be equalTo(0)
-      withStopStrategy.getNextCommand(elevator) must be equalTo("CLOSE")
-      withStopStrategy.getNextCommand(elevator) must be equalTo("UP")
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.gos.size must be equalTo(0)
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
     }
+
+    "stops with a a call at a floor in the same direction" in {
+      elevator.reset(1)
+      elevator.direction = UP
+      strategy.reset
+
+      strategy.addCall(Call(3, UP))
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(2)
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(3)
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.calls.size must be equalTo(0)
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+    }
+
+    "stops with only one call at a floor in the opposite direction" in {
+      elevator.reset(1)
+      elevator.direction = UP
+      strategy.reset
+
+      strategy.addCall(Call(3, DOWN))
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(2)
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(3)
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.calls.size must be equalTo(0)
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+    }
+
+    "stops with only one call at a floor in the opposite direction and then a go" in {
+      elevator.reset(1)
+      elevator.direction = UP
+      strategy.reset
+
+      strategy.addCall(Call(3, DOWN))
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(2)
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(3)
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.calls.size must be equalTo(0)
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.addGo(2)
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+    }
+
+    "handle a go and a call in the same direction" in {
+      elevator.reset(1)
+      elevator.direction = UP
+      strategy.reset
+
+      strategy.addGo(Go(5))
+      strategy.addCall(Call(3, UP))
+
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(2)
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(3)
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.calls.size must be equalTo(0)
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(4)
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(5)
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.gos.size must be equalTo(0)
+    }
+
+    "handle a go and a call in the opposite direction" in {
+      elevator.reset(1)
+      elevator.direction = UP
+      strategy.reset
+
+      strategy.addGo(Go(5))
+      strategy.addCall(Call(3, DOWN))
+
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(2)
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(3)
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(4)
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(5)
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.gos.size must be equalTo(0)
+    }
+
   }
 
   "Nothing command" should {
