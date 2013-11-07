@@ -149,17 +149,36 @@ class DirectionStrategy extends Strategy {
     Logger.debug(s"Look if has stop in current direction: $direction")
 
     val gosInCurrentDirection = gos.count(go => go.currentDirection(elevator.floor) == elevator.direction)
-    def predicateCallInCurrentDirection: (Call) => Boolean = {
-      call => call.direction == elevator.direction
+    if (gosInCurrentDirection > 0) {
+      return direction
     }
-    val callsInCurrentDirection = calls.count(predicateCallInCurrentDirection)
-    val remainingCalls = calls.size - callsInCurrentDirection
 
-    val keepsCurrentDirection = gosInCurrentDirection + callsInCurrentDirection + remainingCalls > 0
-    Logger.debug(s"\tNo stop in direction $direction => keeps direction = $keepsCurrentDirection")
+    // Prefers deserve people in cabins than callers waiting outside.
+    if (!gos.isEmpty) {
+      Logger.debug(s"No gos, inverse direction to ${direction.inverse}")
+      return direction.inverse
+    }
 
-    if (keepsCurrentDirection) direction
-    else direction.inverse
+    // No calls, and already treat gos, return to middle.
+    if (calls.isEmpty) {
+      Logger.debug("No call, force direction to middle floor")
+      return forceDirectionToMiddleFloor(elevator)
+    }
+
+    // TODO: improve search of call.
+    val callsInCurrentDirection = calls.filter(call => call.direction == elevator.direction)
+    Logger.debug("Search for min call and best direction")
+    if (!callsInCurrentDirection.isEmpty) {
+      val nearestCallInCurrentDirection = callsInCurrentDirection.toList.minBy(call => Math.min(elevator.floor, call.toFloor))
+      return directionComparingFloors(nearestCallInCurrentDirection.toFloor, elevator.floor)
+    }
+
+    val nearestCallByFloor = calls.minBy(call => Math.min(elevator.floor, call.toFloor))
+    return directionComparingFloors(nearestCallByFloor.toFloor, elevator.floor)
+  }
+  
+  def directionComparingFloors(a: Int, b: Int) = {
+    if (a < b) DOWN else UP
   }
 
 }
@@ -183,8 +202,8 @@ class OpenCloseStrategy extends DirectionStrategy {
     val neededStops = List(getStopFromFloor(elevator.floor),
         getCallFromFloorFloorInCurrentDirection(elevator),
         getCallWhenNoGos(elevator.floor))
-    val needsStop = neededStops.count(_.size > 0) > 0
-    Logger.debug(s"Needs stop  for $neededStops from floor ${elevator.floor} to ${elevator.direction}")
+    val needsStop = neededStops.count(_.size == 1) > 0
+    Logger.debug(s"Needs stop = $needsStop for $neededStops from floor ${elevator.floor} to ${elevator.direction}")
     
     if (needsStop) {
       neededStops.foreach(maybeStop => maybeStop match {

@@ -127,7 +127,7 @@ object ElevatorSpec extends Specification {
       elevator.reset(10)
       strategy.getNextCommand(elevator) must be equalTo("NOTHING")
     }
-    
+
     "force replacement at the middle floor" in {
       elevator.floor = 5
       strategy.reset
@@ -155,7 +155,7 @@ object ElevatorSpec extends Specification {
     }
 
   }
-  
+
   "OpenCloseStrategy" should {
     
     val strategy = new OpenCloseStrategy()
@@ -173,6 +173,31 @@ object ElevatorSpec extends Specification {
       strategy.getCallFromFloorFloorInCurrentDirection(elevator).size must be equalTo(0)
       strategy.addCall(5, DOWN)
       strategy.getCallFromFloorFloorInCurrentDirection(elevator).size must be equalTo(1)
+
+    }
+
+    "does not need to stop if no go call or" in {
+      elevator.reset(1)
+      strategy.reset
+      strategy.needsStop(elevator) must beFalse
+    }
+
+    "force direction to middle when no another call or go in current direction" in {
+      elevator.reset(5)
+
+      strategy.reset
+      strategy.addCall(4, UP)
+
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      strategy.getNextCommand(elevator) must be equalTo("NOTHING")
 
     }
 
