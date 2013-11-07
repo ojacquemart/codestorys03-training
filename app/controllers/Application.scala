@@ -36,11 +36,15 @@ object Application extends Controller {
 
   def userHasEntered = Action {
     Logger.info("User entered")
+    elevator.addUser
+
     Ok
   }
 
   def userHasExited = Action {
     Logger.info("User exited")
+    elevator.removeUser
+    
     Ok
   }
 

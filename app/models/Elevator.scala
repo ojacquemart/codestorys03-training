@@ -10,15 +10,21 @@ trait DefaultElevator {
 
   var direction: Direction = UP
   var opened: Boolean = false
+  
+  var users = 0
 
   def needsToInverseDirection(): Boolean = (direction == UP && isAtTop) || (direction == DOWN && isAtBottom)
 
   def isAtTop: Boolean = floor == maxFloor - 1
   def isAtBottom: Boolean = floor == 0
   def isAtMiddle: Boolean = floor == middleFloor
+  
+  def addUser = users += 1
+  def removeUser = users -= 1
 
-  def reset(lowerFloor: Int) = {
+  def reset(lowerFloor: Int = 0) = {
     floor = lowerFloor
+    users = 0
     direction = UP
     opened = false
   }
@@ -43,6 +49,13 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends DefaultElev
 
   def getStatus: String = s"floor=$floor, open=$opened, direction=$direction, stops=${getStops()}"
 }
+
+trait SimpleStop {
+  def toFloor: Int
+}
+
+case class Call(toFloor: Int, direction: Direction)
+case class Go(toFloor: Int)
 
 case class Stop(from: Int, to: Int, direction: Direction ) {
 

@@ -62,6 +62,23 @@ object ElevatorSpec extends Specification {
       elevator.floor = 0
       elevator.needsToInverseDirection() must beTrue
     }
+
+    "count users" in {
+      elevator.users must be equalTo(0)
+      elevator.addUser
+      elevator.users must be equalTo(1)
+      elevator.removeUser
+      elevator.users must be equalTo(0)
+    }
+
+    "reset users count" in {
+      elevator.reset(0)
+      elevator.addUser
+      elevator.users must be equalTo(1)
+
+      elevator.reset(0)
+      elevator.users must be equalTo(0)
+    }
   }
 
   "UpAndDownStrategy" should {
