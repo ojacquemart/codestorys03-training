@@ -22,14 +22,14 @@ object Application extends Controller {
 
   def call(atFloor: Int, to: String) = Action {
     Logger.debug(s"Call $atFloor direction $to")
-    elevator.gotTo(atFloor)
+    elevator.call(atFloor, Directions.valueOf(to))
 
     Ok
   }
 
   def go(floorToGo: Int) = Action {
     Logger.debug(s"Go to $floorToGo")
-    elevator.gotTo(floorToGo)
+    elevator.go(floorToGo)
 
     Ok
   }
@@ -44,7 +44,7 @@ object Application extends Controller {
   def userHasExited = Action {
     Logger.info("User exited")
     elevator.removeUser
-    
+
     Ok
   }
 

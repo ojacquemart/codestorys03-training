@@ -36,11 +36,20 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends DefaultElev
 
   def getStops() = strategy.stops
 
+  def call(atFloor: Int, direction: Direction) {
+    strategy.stopsV2.addCall(atFloor, direction)
+  }
+
+  def go(toFloor: Int) = {
+    strategy.stopsV2.addGo(toFloor)
+  }
+
+  @deprecated
   def gotTo(toFloor: Int) = {
     strategy.addStop(new Stop(floor, toFloor, upOrDown(floor, toFloor)))
   }
 
-  private def upOrDown(current: Int, to: Int) = if (current >= to) DOWN else UP
+  def upOrDown(current: Int, to: Int) = if (current >= to) DOWN else UP
 
   override def reset(lowerFloor: Int): Unit = {
     super.reset(lowerFloor)
@@ -57,6 +66,21 @@ trait SimpleStop {
 case class Call(toFloor: Int, direction: Direction)
 case class Go(toFloor: Int)
 
+class Stops {
+
+  var calls: Set[Call] = Set()
+  var gos: Set[Go] = Set()
+
+  def addCall(atFloor: Int, direction: Direction) = {
+    calls += new Call(atFloor, direction)
+  }
+
+  def addGo(toFloor: Int) = {
+    gos += new Go(toFloor)
+  }
+
+}
+
 case class Stop(from: Int, to: Int, direction: Direction ) {
 
   override def hashCode(): Int = to
@@ -71,6 +95,7 @@ case class Stop(from: Int, to: Int, direction: Direction ) {
 
 trait Strategy {
 
+  val stopsV2 = new Stops
   var stops: Set[Stop] = Set()
 
   def getNextCommand(elevator: DefaultElevator): String
@@ -219,4 +244,8 @@ object UP extends Direction {
 
 object DOWN extends Direction {
   def name = "DOWN"
+}
+
+object Directions {
+  def valueOf(direction: String) = if (direction == "UP") UP else DOWN
 }

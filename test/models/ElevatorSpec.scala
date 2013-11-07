@@ -81,6 +81,21 @@ object ElevatorSpec extends Specification {
     }
   }
 
+  "Stops" should {
+
+    val stops = new Stops()
+
+    "add new call" in {
+      stops.addCall(2, UP)
+      stops.calls.size must be equalTo(1)
+    }
+
+    "add new go" in {
+      stops.addGo(2)
+      stops.gos.size must be equalTo(1)
+    }
+  }
+
   "UpAndDownStrategy" should {
 
     val strategy = new UpAndDownStrategy()
@@ -253,6 +268,14 @@ object ElevatorSpec extends Specification {
     "inverse current direction" in {
       UP.inverse should be equalTo(DOWN)
       DOWN.inverse should be equalTo(UP)
+    }
+  }
+
+  "Directions" should {
+
+    "get value from" in {
+      Directions.valueOf("UP") must be equalTo(UP)
+      Directions.valueOf("DOWN") must be equalTo(DOWN)
     }
   }
 
