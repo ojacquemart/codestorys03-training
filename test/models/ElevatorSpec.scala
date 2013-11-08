@@ -125,6 +125,10 @@ object ElevatorSpec extends Specification {
 
     "not move if no one is in the cabin & at the middle floor" in {
       elevator.reset(10)
+      strategy.reset
+      strategy.getNextCommand(elevator) must be equalTo("NOTHING")
+      strategy.getNextCommand(elevator) must be equalTo("NOTHING")
+      strategy.getNextCommand(elevator) must be equalTo("NOTHING")
       strategy.getNextCommand(elevator) must be equalTo("NOTHING")
     }
 
@@ -173,7 +177,64 @@ object ElevatorSpec extends Specification {
       strategy.getCallFromFloorFloorInCurrentDirection(elevator).size must be equalTo(0)
       strategy.addCall(5, DOWN)
       strategy.getCallFromFloorFloorInCurrentDirection(elevator).size must be equalTo(1)
+    }
 
+    "change direction is no go and one call" in {
+      elevator.reset(5)
+      elevator.direction = UP
+      strategy.reset
+      strategy.addCall(Call(2, DOWN))
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+    }
+
+    "deserves a go and and has to search for calls in higher floors" in {
+      elevator.reset(5)
+      elevator.direction = UP
+      strategy.reset
+      strategy.addGo(3)
+      strategy.addCall(6, UP)
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+    }
+
+    "deserves a go and and has to search for calls in lower floors" in {
+      elevator.reset(15)
+      elevator.direction = UP
+      strategy.reset
+      strategy.addGo(17)
+      strategy.addCall(6, UP)
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(17)
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+    }
+
+    "deserves two consecutive gos" in {
+      elevator.reset(15)
+      elevator.direction = UP
+      strategy.reset
+      strategy.addGo(17)
+      strategy.addGo(18)
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(17)
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must be equalTo(18)
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
     }
 
     "does not need to stop if no go call or" in {

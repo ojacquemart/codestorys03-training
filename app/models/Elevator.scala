@@ -67,18 +67,6 @@ case class Go(toFloor: Int) extends SimpleStop {
   def currentDirection(currentFloor: Int) =  if (currentFloor >= toFloor) DOWN else UP
 }
 
-case class Stop(from: Int, to: Int, direction: Direction ) {
-
-  override def hashCode(): Int = to
-
-  override def equals(obj: scala.Any): Boolean = obj match {
-    case other: Stop => to == other.to
-    case _ => false
-  }
-
-  override def toString = s"[floor=$to,to=$direction]"
-}
-
 trait Strategy {
 
   var calls: Set[Call] = Set()
@@ -98,6 +86,10 @@ trait Strategy {
   def addCall(call: Call) = calls += call
   def canDoNothing(elevator: DefaultElevator) = elevator.isAtMiddle && hasNoCallAndGo()
   def hasNoCallAndGo() = gos.isEmpty && calls.isEmpty
+
+  def hasNoGo() = gos.isEmpty
+  def hasOneCall() = calls.size == 1
+  def firstCallDirection() = calls.head.direction
 
   def reset = {
     gos = Set()
@@ -148,17 +140,20 @@ class DirectionStrategy extends Strategy {
     val direction = elevator.direction
     Logger.debug(s"Look if has stop in current direction: $direction")
 
-    val gosInCurrentDirection = gos.count(go => go.currentDirection(elevator.floor) == elevator.direction)
-    if (gosInCurrentDirection > 0) {
+    val (gosSameDirection, gosOtherDirection) = gos.partition(go => go.currentDirection(elevator.floor) == elevator.direction)
+    if (gosSameDirection.size > 0) {
+      Logger.debug(s"Stops in current direction: continue ${direction}")
       return direction
     }
-
-    // Prefers deserve people in cabins than callers waiting outside.
-    if (!gos.isEmpty) {
-      Logger.debug(s"No gos, inverse direction to ${direction.inverse}")
+    if (gosOtherDirection.size > 0) {
+      Logger.debug(s"No stops in current direction: inverse direction to ${direction.inverse}")
       return direction.inverse
     }
 
+    return findDirectionByCalls(elevator)
+  }
+
+  def findDirectionByCalls(elevator: DefaultElevator): Direction = {
     // No calls, and already treat gos, return to middle.
     if (calls.isEmpty) {
       Logger.debug("No call, force direction to middle floor")
@@ -166,20 +161,20 @@ class DirectionStrategy extends Strategy {
     }
 
     // TODO: improve search of call.
-    val callsInCurrentDirection = calls.filter(call => call.direction == elevator.direction)
+    val (callsCurrentDirection, callsInverseDirection) = calls
+      .partition(call => call.direction == elevator.direction)
+
+    val callsToHandle = if (!callsCurrentDirection.isEmpty) callsCurrentDirection else callsInverseDirection
     Logger.debug("Search for min call and best direction")
-    if (!callsInCurrentDirection.isEmpty) {
-      val nearestCallInCurrentDirection = callsInCurrentDirection.toList.minBy(call => Math.min(elevator.floor, call.toFloor))
+    if (!callsToHandle.isEmpty) {
+      val nearestCallInCurrentDirection = callsToHandle.toList.minBy(call => Math.min(call.toFloor, elevator.floor))
       return directionComparingFloors(nearestCallInCurrentDirection.toFloor, elevator.floor)
     }
 
-    val nearestCallByFloor = calls.minBy(call => Math.min(elevator.floor, call.toFloor))
-    return directionComparingFloors(nearestCallByFloor.toFloor, elevator.floor)
+    return elevator.direction
   }
   
-  def directionComparingFloors(a: Int, b: Int) = {
-    if (a < b) DOWN else UP
-  }
+  def directionComparingFloors(a: Int, b: Int) =  if (a < b) DOWN else UP
 
 }
 
@@ -199,6 +194,7 @@ class OpenCloseStrategy extends DirectionStrategy {
   }
 
   def needsStop(elevator: DefaultElevator): Boolean = {
+    // Lists of Option[SimpleStop] to check stops.
     val neededStops = List(getStopFromFloor(elevator.floor),
         getCallFromFloorFloorInCurrentDirection(elevator),
         getCallWhenNoGos(elevator.floor))
