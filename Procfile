@@ -1,1 +1,1 @@
-web: target/universal/stage/bin/codestoryelevato -Dhttp.port=$PORT
+web: target/universal/stage/bin/codestoryelevator -Dhttp.port=$PORT
