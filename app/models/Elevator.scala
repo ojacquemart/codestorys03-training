@@ -2,7 +2,7 @@ package models
 
 import play.api.Logger
 
-trait DefaultElevator {
+trait Elevator {
 
   var floor: Int = 0
   val maxFloor: Int
@@ -30,7 +30,7 @@ trait DefaultElevator {
   }
 }
 
-case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends DefaultElevator {
+case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends Elevator {
 
   def getNextCommand() = strategy.getNextCommand(this)
 
@@ -57,16 +57,6 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends DefaultElev
       s"direction=$direction, calls=${getCalls()}}, gos=${getGos()}"
 }
 
-trait SimpleStop {
-  def toFloor: Int
-}
-
-case class Call(toFloor: Int, direction: Direction) extends SimpleStop
-case class Go(toFloor: Int) extends SimpleStop {
-
-  def currentDirection(currentFloor: Int) =  if (currentFloor >= toFloor) DOWN else UP
-}
-
 trait Strategy {
 
   var calls: Set[Call] = Set()
@@ -80,11 +70,11 @@ trait Strategy {
     gos += new Go(toFloor)
   }
 
-  def getNextCommand(elevator: DefaultElevator): String
+  def getNextCommand(elevator: Elevator): String
 
   def addGo(go: Go) = gos += go
   def addCall(call: Call) = calls += call
-  def canDoNothing(elevator: DefaultElevator) = elevator.isAtMiddle && hasNoCallAndGo()
+  def canDoNothing(elevator: Elevator) = elevator.isAtMiddle && hasNoCallAndGo()
   def hasNoCallAndGo() = gos.isEmpty && calls.isEmpty
 
   def hasNoGo() = gos.isEmpty
@@ -105,7 +95,7 @@ class DirectionStrategy extends Strategy {
     else DownCommand
   }
 
-  def getNextCommand(elevator: DefaultElevator): String = {
+  def getNextCommand(elevator: Elevator): String = {
     val needsToInverseDirection = elevator.needsToInverseDirection()
     if (needsToInverseDirection) {
       Logger.debug("At top or bottom floor => inverse the direction")
@@ -124,19 +114,19 @@ class DirectionStrategy extends Strategy {
   }
 
 
-  def findBestDirection(elevator: DefaultElevator) = {
+  def findBestDirection(elevator: Elevator) = {
     if (hasNoCallAndGo()) forceDirectionToMiddleFloor(elevator)
     else findBestDirectionByCurrentDirection(elevator)
 
   }
 
-  def forceDirectionToMiddleFloor(elevator: DefaultElevator): Direction = {
+  def forceDirectionToMiddleFloor(elevator: Elevator): Direction = {
     Logger.debug("No stop, force replacement to the middle floor")
     if (elevator.floor < elevator.middleFloor) UP
     else DOWN
   }
 
-  def findBestDirectionByCurrentDirection(elevator: DefaultElevator): Direction = {
+  def findBestDirectionByCurrentDirection(elevator: Elevator): Direction = {
     val direction = elevator.direction
     Logger.debug(s"Look if has stop in current direction: $direction")
 
@@ -153,7 +143,7 @@ class DirectionStrategy extends Strategy {
     return findDirectionByCalls(elevator)
   }
 
-  def findDirectionByCalls(elevator: DefaultElevator): Direction = {
+  def findDirectionByCalls(elevator: Elevator): Direction = {
     // No calls, and already treat gos, return to middle.
     if (calls.isEmpty) {
       Logger.debug("No call, force direction to middle floor")
@@ -163,15 +153,18 @@ class DirectionStrategy extends Strategy {
     val (callsCurrentDirection, callsInverseDirection) = calls.toList
       .sortBy(_.toFloor)
       .partition(call => call.direction == elevator.direction)
+    Logger.debug(s"Calls by direction [current=$callsCurrentDirection, inverse=$callsInverseDirection]")
 
     val callsToHandle = if (!callsCurrentDirection.isEmpty) callsCurrentDirection else callsInverseDirection
     Logger.debug("Search for min call and best direction")
-    if (!callsToHandle.isEmpty) {
-      val nearestCallInCurrentDirection = callsToHandle.head
-      return if (nearestCallInCurrentDirection.toFloor < elevator.floor) DOWN else UP
+    if (callsToHandle.isEmpty) {
+      Logger.debug("No calls to handle, go the middle floor")
+      return forceDirectionToMiddleFloor(elevator)
     }
 
-    return elevator.direction
+    Logger.debug("Lets go the min call floor")
+    val firstCallFloor = callsToHandle.head.toFloor
+    return if (elevator.floor < firstCallFloor) UP else DOWN
   }
   
   def directionComparingFloors(a: Int, b: Int) =  if (a < b) DOWN else UP
@@ -180,7 +173,7 @@ class DirectionStrategy extends Strategy {
 
 class OpenCloseStrategy extends DirectionStrategy {
 
-  override def getNextCommand(elevator: DefaultElevator): String = {
+  override def getNextCommand(elevator: Elevator): String = {
     Logger.debug(s"Current calls=$calls, gos=$gos")
 
     if (needsStop(elevator)) {
@@ -193,7 +186,7 @@ class OpenCloseStrategy extends DirectionStrategy {
     return super.getNextCommand(elevator)
   }
 
-  def needsStop(elevator: DefaultElevator): Boolean = {
+  def needsStop(elevator: Elevator): Boolean = {
     // Lists of Option[SimpleStop] to check stops.
     val neededStops = List(getStopFromFloor(elevator.floor),
         getCallFromFloorFloorInCurrentDirection(elevator))
@@ -213,79 +206,10 @@ class OpenCloseStrategy extends DirectionStrategy {
 
   def getStopFromFloor(floor: Int): Option[Go] = gos.find(go => go.toFloor == floor)
 
-  def getCallFromFloorFloorInCurrentDirection(elevator: DefaultElevator) = {
+  def getCallFromFloorFloorInCurrentDirection(elevator: Elevator) = {
     // No gos, check if has one call whatever the direction
     if (gos.isEmpty) calls.find(_.toFloor == elevator.floor)
     else calls.find(c => c.toFloor == elevator.floor && c.direction == elevator.direction)
   }
 }
 
-trait Command {
-  def to(elevator: DefaultElevator): String
-}
-
-object NothingCommand extends Command {
-  def to(elevator: DefaultElevator): String = "NOTHING"
-}
-
-object UpCommand extends Command {
-  def to(elevator: DefaultElevator): String = {
-    if (elevator.isAtTop) NothingCommand.to(elevator)
-    else {
-      elevator.floor += 1
-      elevator.direction = UP
-      return "UP"
-    }
-  }
-}
-
-object DownCommand extends Command {
-  def to(elevator: DefaultElevator): String = {
-    if (elevator.isAtBottom) NothingCommand.to(elevator)
-    else {
-      elevator.floor -= 1
-      elevator.direction = DOWN
-      "DOWN"
-    }
-  }
-}
-
-object OpenCommand extends Command {
-  def to(elevator: DefaultElevator): String = {
-    if (!elevator.opened) {
-      elevator.opened = true
-      "OPEN"
-    }
-    else NothingCommand.to(elevator)
-  }
-}
-
-object CloseCommand extends Command {
-  def to(elevator: DefaultElevator): String = {
-    if (elevator.opened) {
-      elevator.opened = false
-      "CLOSE"
-    }
-    else NothingCommand.to(elevator)
-  }
-}
-
-trait Direction {
-  def name: String
-
-  def inverse: Direction = if (name == "UP") DOWN else UP
-
-  override def toString: String = name
-}
-
-object UP extends Direction {
-  def name = "UP"
-}
-
-object DOWN extends Direction {
-  def name = "DOWN"
-}
-
-object Directions {
-  def valueOf(direction: String) = if (direction == "UP") UP else DOWN
-}

@@ -179,23 +179,6 @@ object ElevatorSpec extends Specification {
       strategy.getCallFromFloorFloorInCurrentDirection(elevator).size must be equalTo(1)
     }
 
-    "get calls in current direction when gos" in {
-      elevator.reset(5)
-      elevator.direction = DOWN
-      strategy.reset
-
-      strategy.addGo(2)
-      strategy.addCall(3, UP)
-      strategy.addCall(5, UP)
-      strategy.getCallFromFloorFloorInCurrentDirection(elevator).size must be equalTo(1)
-
-      strategy.getNextCommand(elevator) must be equalTo("OPEN")
-      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
-      strategy.getNextCommand(elevator) must be equalTo("DOWN")
-      strategy.addCall(4, DOWN)
-      strategy.getCallFromFloorFloorInCurrentDirection(elevator).size must be equalTo(1)
-    }
-
     "not go and up or down continually with current in middle of two calls" in {
       elevator.reset(2)
       strategy.reset
@@ -480,22 +463,6 @@ object ElevatorSpec extends Specification {
       elevator.opened = true
       CloseCommand.to(elevator) must be equalTo("CLOSE")
       elevator.opened must beFalse
-    }
-  }
-
-  "Direction" should {
-
-    "inverse current direction" in {
-      UP.inverse should be equalTo(DOWN)
-      DOWN.inverse should be equalTo(UP)
-    }
-  }
-
-  "Directions" should {
-
-    "get value from" in {
-      Directions.valueOf("UP") must be equalTo(UP)
-      Directions.valueOf("DOWN") must be equalTo(DOWN)
     }
   }
 
