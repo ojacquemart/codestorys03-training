@@ -169,7 +169,7 @@ object ElevatorSpec extends Specification {
       strategy.getStopFromFloor(10).size must be equalTo(1)
     }
 
-    "get calls in current direction" in {
+    "get calls in current direction when no go" in {
       elevator.reset(5)
       elevator.direction = DOWN
       strategy.reset
@@ -177,6 +177,36 @@ object ElevatorSpec extends Specification {
       strategy.getCallFromFloorFloorInCurrentDirection(elevator).size must be equalTo(0)
       strategy.addCall(5, DOWN)
       strategy.getCallFromFloorFloorInCurrentDirection(elevator).size must be equalTo(1)
+    }
+
+    "get calls in current direction when gos" in {
+      elevator.reset(5)
+      elevator.direction = DOWN
+      strategy.reset
+
+      strategy.addGo(2)
+      strategy.addCall(3, UP)
+      strategy.addCall(5, UP)
+      strategy.getCallFromFloorFloorInCurrentDirection(elevator).size must be equalTo(1)
+
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+      strategy.addCall(4, DOWN)
+      strategy.getCallFromFloorFloorInCurrentDirection(elevator).size must be equalTo(1)
+    }
+
+    "not go and up or down continually with current in middle of two calls" in {
+      elevator.reset(2)
+      strategy.reset
+      strategy.addCall(Call(0, UP))
+      strategy.addCall(Call(4, UP))
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
     }
 
     "change direction is no go and one call" in {
@@ -218,6 +248,17 @@ object ElevatorSpec extends Specification {
       strategy.getNextCommand(elevator) must be equalTo("CLOSE")
       strategy.getNextCommand(elevator) must be equalTo("DOWN")
     }
+
+    "not keep two calls in different direction in the system" in {
+      elevator.reset(10)
+      strategy.reset
+      strategy.addCall(Call(10, UP))
+      strategy.addCall(Call(10, DOWN))
+
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.calls.size must be equalTo(0)
+    }
+
 
     "deserves two consecutive gos" in {
       elevator.reset(15)

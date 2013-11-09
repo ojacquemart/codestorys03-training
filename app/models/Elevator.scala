@@ -160,15 +160,15 @@ class DirectionStrategy extends Strategy {
       return forceDirectionToMiddleFloor(elevator)
     }
 
-    // TODO: improve search of call.
-    val (callsCurrentDirection, callsInverseDirection) = calls
+    val (callsCurrentDirection, callsInverseDirection) = calls.toList
+      .sortBy(_.toFloor)
       .partition(call => call.direction == elevator.direction)
 
     val callsToHandle = if (!callsCurrentDirection.isEmpty) callsCurrentDirection else callsInverseDirection
     Logger.debug("Search for min call and best direction")
     if (!callsToHandle.isEmpty) {
-      val nearestCallInCurrentDirection = callsToHandle.toList.minBy(call => Math.min(call.toFloor, elevator.floor))
-      return directionComparingFloors(nearestCallInCurrentDirection.toFloor, elevator.floor)
+      val nearestCallInCurrentDirection = callsToHandle.head
+      return if (nearestCallInCurrentDirection.toFloor < elevator.floor) DOWN else UP
     }
 
     return elevator.direction
@@ -196,15 +196,14 @@ class OpenCloseStrategy extends DirectionStrategy {
   def needsStop(elevator: DefaultElevator): Boolean = {
     // Lists of Option[SimpleStop] to check stops.
     val neededStops = List(getStopFromFloor(elevator.floor),
-        getCallFromFloorFloorInCurrentDirection(elevator),
-        getCallWhenNoGos(elevator.floor))
+        getCallFromFloorFloorInCurrentDirection(elevator))
     val needsStop = neededStops.count(_.size == 1) > 0
     Logger.debug(s"Needs stop = $needsStop for $neededStops from floor ${elevator.floor} to ${elevator.direction}")
     
     if (needsStop) {
       neededStops.foreach(maybeStop => maybeStop match {
         case Some(go: Go) => gos -= go
-        case Some(call: Call) => calls -= call
+        case Some(call: Call) => calls = calls.filterNot(_.toFloor == call.toFloor)
         case _ => {}
       })
     }
@@ -214,12 +213,10 @@ class OpenCloseStrategy extends DirectionStrategy {
 
   def getStopFromFloor(floor: Int): Option[Go] = gos.find(go => go.toFloor == floor)
 
-  def getCallFromFloorFloorInCurrentDirection(elevator: DefaultElevator) =
-    calls.find(c => c.toFloor == elevator.floor && c.direction == elevator.direction)
-
-  def getCallWhenNoGos(floor: Int) = {
-    if (gos.isEmpty) calls.find(_.toFloor == floor)
-    else None
+  def getCallFromFloorFloorInCurrentDirection(elevator: DefaultElevator) = {
+    // No gos, check if has one call whatever the direction
+    if (gos.isEmpty) calls.find(_.toFloor == elevator.floor)
+    else calls.find(c => c.toFloor == elevator.floor && c.direction == elevator.direction)
   }
 }
 
