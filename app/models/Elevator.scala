@@ -144,18 +144,20 @@ class DirectionStrategy extends Strategy {
   }
 
   def findDirectionByCalls(elevator: Elevator): Direction = {
-    // No calls, and already treat gos, return to middle.
     if (calls.isEmpty) {
       Logger.debug("No call, force direction to middle floor")
       return forceDirectionToMiddleFloor(elevator)
     }
 
-    val firstCallCallFloor = calls.toList.sortBy(_.toFloor).head
-    Logger.debug(s"Lets go the first call: $firstCallCallFloor")
-    return if (elevator.floor < firstCallCallFloor.toFloor) UP else DOWN
+    val firstCallFloor = calls.toList.sortBy(_.toFloor).head.toFloor
+    Logger.debug(s"Lets go the first call: $firstCallFloor")
+    val goesUp = needsToGoUp(elevator.floor, firstCallFloor)
+    Logger.debug(s"\tNeeds to go up: $goesUp")
+
+    if (goesUp) UP else DOWN
   }
 
-  def directionComparingFloors(a: Int, b: Int) =  if (a < b) DOWN else UP
+  def needsToGoUp(currentFloor: Int, toFloor: Int) = currentFloor < toFloor
 
 }
 

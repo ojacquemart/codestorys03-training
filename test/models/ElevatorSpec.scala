@@ -5,7 +5,7 @@ import org.specs2.mutable.Specification
 object ElevatorSpec extends Specification {
 
   val MaxFloor = 20
-  val elevator = new SimpleElevator(MaxFloor, new DirectionStrategy())
+  val elevator = new SimpleElevator(MaxFloor, new OpenCloseStrategy())
 
   "Elevator" should {
 
@@ -414,6 +414,13 @@ object ElevatorSpec extends Specification {
       strategy.getNextCommand(elevator) must be equalTo("OPEN")
       strategy.getNextCommand(elevator) must be equalTo("CLOSE")
       strategy.getNextCommand(elevator) must be equalTo("UP")
+    }
+
+    "check if needs to up" in {
+      strategy.needsToGoUp(5, 7) must beTrue
+      strategy.needsToGoUp(5, 6) must beTrue
+      strategy.needsToGoUp(5, 5) must beFalse
+      strategy.needsToGoUp(5, 4) must beFalse
     }
 
 
