@@ -219,6 +219,16 @@ object ElevatorSpec extends Specification {
       strategy.getNextCommand(elevator) must be equalTo("DOWN")
     }
 
+    "not keep two calls in different direction in the system" in {
+      elevator.reset(10)
+      strategy.reset
+      strategy.addCall(Call(10, UP))
+      strategy.addCall(Call(10, DOWN))
+
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.calls.size must be equalTo(0)
+    }
+
     "deserves two consecutive gos" in {
       elevator.reset(15)
       elevator.direction = UP

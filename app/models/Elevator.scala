@@ -204,7 +204,7 @@ class OpenCloseStrategy extends DirectionStrategy {
     if (needsStop) {
       neededStops.foreach(maybeStop => maybeStop match {
         case Some(go: Go) => gos -= go
-        case Some(call: Call) => calls -= call
+        case Some(call: Call) => calls = calls.filterNot(_.toFloor == call.toFloor)
         case _ => {}
       })
     }
