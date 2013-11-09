@@ -149,12 +149,19 @@ class DirectionStrategy extends Strategy {
       return forceDirectionToMiddleFloor(elevator)
     }
 
-    val firstCallFloor = calls.toList.sortBy(_.toFloor).head.toFloor
+    val firstCallFloor = nearestFloorByCurrentFloor(elevator.floor)
     Logger.debug(s"Lets go the first call: $firstCallFloor")
     val goesUp = needsToGoUp(elevator.floor, firstCallFloor)
     Logger.debug(s"\tNeeds to go up: $goesUp")
 
     if (goesUp) UP else DOWN
+  }
+
+  def nearestFloorByCurrentFloor(currentFloor: Int): Int = {
+    calls.toList
+      .sortBy(_.toFloor)
+      .minBy(call => Math.abs(currentFloor - call.toFloor))
+      .toFloor
   }
 
   def needsToGoUp(currentFloor: Int, toFloor: Int) = currentFloor < toFloor

@@ -405,6 +405,16 @@ object ElevatorSpec extends Specification {
       strategy.addCall(2, UP)
       strategy.addCall(7, DOWN)
 
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must beEqualTo(6)
+      strategy.getNextCommand(elevator) must be equalTo("UP")
+      elevator.floor must beEqualTo(7)
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+      elevator.floor must beEqualTo(6)
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+      elevator.floor must beEqualTo(5)
       strategy.getNextCommand(elevator) must be equalTo("DOWN")
       elevator.floor must beEqualTo(4)
       strategy.getNextCommand(elevator) must be equalTo("DOWN")
@@ -423,6 +433,24 @@ object ElevatorSpec extends Specification {
       strategy.needsToGoUp(5, 4) must beFalse
     }
 
+    "find nearest call to go" in {
+      strategy.reset
+      strategy.addCall(2, UP)
+      strategy.addCall(5, UP)
+      strategy.addCall(7, UP)
+      strategy.addCall(11, UP)
+      strategy.addCall(15, UP)
+      strategy.addCall(19, UP)
+
+      strategy.nearestFloorByCurrentFloor(1) must be equalTo(2)
+      strategy.nearestFloorByCurrentFloor(4) must be equalTo(5)
+      strategy.nearestFloorByCurrentFloor(6) must be equalTo(5)
+      strategy.nearestFloorByCurrentFloor(10) must be equalTo(11)
+      strategy.nearestFloorByCurrentFloor(13) must be equalTo(11)
+      strategy.nearestFloorByCurrentFloor(16) must be equalTo(15)
+      strategy.nearestFloorByCurrentFloor(17) must be equalTo(15)
+      strategy.nearestFloorByCurrentFloor(18) must be equalTo(19)
+    }
 
   }
 
