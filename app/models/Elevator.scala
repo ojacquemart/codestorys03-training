@@ -10,7 +10,7 @@ trait Elevator {
 
   var direction: Direction = UP
   var opened: Boolean = false
-  
+
   var users = 0
 
   def needsToInverseDirection(): Boolean = (direction == UP && isAtTop) || (direction == DOWN && isAtBottom)
@@ -18,7 +18,7 @@ trait Elevator {
   def isAtTop: Boolean = floor == maxFloor - 1
   def isAtBottom: Boolean = floor == 0
   def isAtMiddle: Boolean = floor == middleFloor
-  
+
   def addUser = users += 1
   def removeUser = users -= 1
 
@@ -54,7 +54,7 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends Elevator {
   }
 
   def getStatus: String = s"floor=$floor, open=$opened, users=$users, " +
-      s"direction=$direction, calls=${getCalls()}}, gos=${getGos()}"
+    s"direction=$direction, calls=${getCalls()}}, gos=${getGos()}"
 }
 
 trait Strategy {
@@ -150,23 +150,11 @@ class DirectionStrategy extends Strategy {
       return forceDirectionToMiddleFloor(elevator)
     }
 
-    val (callsCurrentDirection, callsInverseDirection) = calls.toList
-      .sortBy(_.toFloor)
-      .partition(call => call.direction == elevator.direction)
-    Logger.debug(s"Calls by direction [current=$callsCurrentDirection, inverse=$callsInverseDirection]")
-
-    val callsToHandle = if (!callsCurrentDirection.isEmpty) callsCurrentDirection else callsInverseDirection
-    Logger.debug("Search for min call and best direction")
-    if (callsToHandle.isEmpty) {
-      Logger.debug("No calls to handle, go the middle floor")
-      return forceDirectionToMiddleFloor(elevator)
-    }
-
-    Logger.debug("Lets go the min call floor")
-    val firstCallFloor = callsToHandle.head.toFloor
-    return if (elevator.floor < firstCallFloor) UP else DOWN
+    val firstCallCallFloor = calls.toList.sortBy(_.toFloor).head
+    Logger.debug(s"Lets go the first call: $firstCallCallFloor")
+    return if (elevator.floor < firstCallCallFloor.toFloor) UP else DOWN
   }
-  
+
   def directionComparingFloors(a: Int, b: Int) =  if (a < b) DOWN else UP
 
 }
@@ -189,10 +177,10 @@ class OpenCloseStrategy extends DirectionStrategy {
   def needsStop(elevator: Elevator): Boolean = {
     // Lists of Option[SimpleStop] to check stops.
     val neededStops = List(getStopFromFloor(elevator.floor),
-        getCallFromFloorFloorInCurrentDirection(elevator))
+      getCallFromFloorFloorInCurrentDirection(elevator))
     val needsStop = neededStops.count(_.size == 1) > 0
     Logger.debug(s"Needs stop = $needsStop for $neededStops from floor ${elevator.floor} to ${elevator.direction}")
-    
+
     if (needsStop) {
       neededStops.foreach(maybeStop => maybeStop match {
         case Some(go: Go) => gos -= go

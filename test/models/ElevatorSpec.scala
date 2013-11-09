@@ -397,73 +397,27 @@ object ElevatorSpec extends Specification {
       strategy.gos.size must be equalTo(0)
     }
 
-  }
-
-  "Nothing command" should {
-    "do nothing" in {
-      NothingCommand.to(elevator) must be equalTo("NOTHING")
-    }
-  }
-
-  "Up command" should {
-
-    "do nothing when elevator is at top floor" in {
-      elevator.floor = MaxFloor - 1
-      UpCommand.to(elevator) must be equalTo("NOTHING")
-    }
-
-    "go up one floor in UP direction" in {
-      elevator.floor = 1
+    "not fucking fool me" in {
+      elevator.reset(5)
       elevator.direction = DOWN
-      UpCommand.to(elevator) must be equalTo("UP")
-      elevator.floor must be equalTo(2)
-      elevator.direction must be equalTo(UP)
+      strategy.reset
+
+      strategy.addCall(2, UP)
+      strategy.addCall(7, DOWN)
+
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+      elevator.floor must beEqualTo(4)
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+      elevator.floor must beEqualTo(3)
+      strategy.getNextCommand(elevator) must be equalTo("DOWN")
+      elevator.floor must beEqualTo(2)
+      strategy.getNextCommand(elevator) must be equalTo("OPEN")
+      strategy.getNextCommand(elevator) must be equalTo("CLOSE")
+      strategy.getNextCommand(elevator) must be equalTo("UP")
     }
+
+
   }
 
-
-  "Down command" should {
-
-    "do nothing when elevator is at bottom floor" in {
-      elevator.floor = 0
-      DownCommand.to(elevator) must be equalTo("NOTHING")
-    }
-
-    "go down one floor in DOWN direction" in {
-      elevator.floor = 2
-      elevator.direction = UP
-      DownCommand.to(elevator) must be equalTo("DOWN")
-      elevator.floor must be equalTo(1)
-      elevator.direction must be equalTo(DOWN)
-    }
-  }
-
-  "Open command" should {
-
-    "do nothing when doors are already opened" in {
-      elevator.opened = true
-      OpenCommand.to(elevator) must be equalTo("NOTHING")
-    }
-
-    "open doors if doors are closed" in {
-      elevator.opened = false
-      OpenCommand.to(elevator) must be equalTo("OPEN")
-      elevator.opened must beTrue
-    }
-  }
-
-  "Close command" should {
-
-    "do nothing when doors are already closed" in {
-      elevator.opened = false
-      CloseCommand.to(elevator) must be equalTo("NOTHING")
-    }
-
-    "close doors if doors are opened" in {
-      elevator.opened = true
-      CloseCommand.to(elevator) must be equalTo("CLOSE")
-      elevator.opened must beFalse
-    }
-  }
 
 }
