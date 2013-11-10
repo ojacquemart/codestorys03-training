@@ -14,7 +14,7 @@ object Application extends Controller {
   }
 
   def reset(lowerFloor: Int, higherFloor: Int, cause: String) = Action {
-    Logger.info(s"""RESET RESET RESET
+    Logger.info(s"""@@@ RESET
            Reset $lowerFloor - $higherFloor for '$cause'""")
     elevator.resetToFloor(lowerFloor)
 
@@ -22,38 +22,38 @@ object Application extends Controller {
   }
 
   def call(atFloor: Int, to: String) = Action {
-    Logger.info(s"Call $atFloor direction $to")
+    Logger.info(s"@@@ CALL $atFloor direction $to")
     elevator.call(atFloor, Directions.valueOf(to))
 
     Ok
   }
 
   def go(floorToGo: Int) = Action {
-    Logger.info(s"Go to $floorToGo")
+    Logger.info(s"@@@ GO TO $floorToGo")
     elevator.go(floorToGo)
 
     Ok
   }
 
   def userHasEntered = Action {
-    Logger.info(s"User entered at ${elevator.floor}")
+    Logger.info(s"@@@ USER ENTERED AT ${elevator.floor}")
     elevator.userHasEntered
 
     Ok
   }
 
   def userHasExited = Action {
-    Logger.info(s"User exited at ${elevator.floor}")
+    Logger.info(s"@@@ USER EXITED AT ${elevator.floor}")
     elevator.onUserExited
 
     Ok
   }
 
   def nextCommand = Action {
-    Logger.info(s"Next command, status beforeAction: ${elevator.getStatus}")
+    Logger.info(s"@@@ NEXT COMMAND, status beforeAction: ${elevator.getStatus}")
     val nextCommand = elevator.nextCommand()
-    Logger.info(s"Next command: $nextCommand")
-    Logger.info(s"Next command, status afterAction: ${elevator.getStatus}")
+    Logger.info(s"@@@ NEXT COMMAND: $nextCommand")
+    Logger.info(s"@@@ NEXT COMMAND, status afterAction: ${elevator.getStatus}")
 
     Ok(nextCommand)
   }

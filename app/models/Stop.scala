@@ -15,7 +15,7 @@ case class Call(fromFloor: Int, toFloor: Int, direction: Direction, ticks: Int =
     case _ => false
   }
 
-  override def toString: String = s"Call(from=$fromFloor, to=$toFloor)"
+  override def toString: String = s"Call(to=$toFloor,direction=$direction)"
 }
 case class Go(fromFloor: Int, toFloor: Int, var ticks: Int = 0) extends Stop {
 
@@ -28,5 +28,5 @@ case class Go(fromFloor: Int, toFloor: Int, var ticks: Int = 0) extends Stop {
   }
 
   def currentDirection(currentFloor: Int) =  if (currentFloor >= toFloor) DOWN else UP
-  override def toString: String = s"Stop(from=$fromFloor, to=$toFloor, ticks=$ticks)"
+  override def toString: String = s"Stop(to=$toFloor, ticks=$ticks)"
 }
