@@ -2,16 +2,24 @@ package models
 
 import play.api.Logger
 
-trait Elevator {
+import scala.collection.mutable.Map
 
-  var floor: Int = 0
+trait Reset {
+  def reset(): Unit
+}
+
+trait Elevator extends Reset {
+
   val maxFloor: Int
   val middleFloor = maxFloor / 2
+
+  var floor: Int = 0
 
   var direction: Direction = UP
   var opened: Boolean = false
 
   var users = 0
+  var waiters = new Waiters
 
   def needsToInverseDirection(): Boolean = (direction == UP && isAtTop) || (direction == DOWN && isAtBottom)
 
@@ -19,42 +27,88 @@ trait Elevator {
   def isAtBottom: Boolean = floor == 0
   def isAtMiddle: Boolean = floor == middleFloor
 
-  def addUser = users += 1
-  def removeUser = users -= 1
+  def call(atFloor: Int, direction: Direction) {
+    waiters.addAt(atFloor)
+  }
 
-  def reset(lowerFloor: Int = 0) = {
+  def go(toFloor: Int) = { }
+
+  def userHasEntered = {
+    users += 1
+    waiters.removeAt(floor)
+  }
+
+  def onUserExited = users -= 1
+
+  def resetToFloor(lowerFloor: Int = 0) = {
     floor = lowerFloor
+    reset()
+  }
+
+  override def reset() = {
     users = 0
+    waiters.reset
     direction = UP
     opened = false
   }
 }
 
-case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends Elevator {
+case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends Elevator with Reset {
 
-  def getNextCommand() = strategy.getNextCommand(this)
+  def nextCommand() = strategy.nextCommand(this)
 
-  def getGos() = strategy.gos
-
-  def getCalls() = strategy.calls
-
-  def call(atFloor: Int, direction: Direction) {
-    strategy.addCall(atFloor, direction)
+  override def call(atFloor: Int, direction: Direction) {
+    super.call(atFloor, direction)
+    strategy.addCall(floor, atFloor, direction)
   }
 
-  def go(toFloor: Int) = {
-    strategy.addGo(toFloor)
+  override def go(toFloor: Int) = {
+    strategy.addGo(floor, toFloor)
   }
 
-  def upOrDown(current: Int, to: Int) = if (current >= to) DOWN else UP
-
-  override def reset(lowerFloor: Int): Unit = {
-    super.reset(lowerFloor)
+  override def reset() = {
+    super.reset()
     strategy.reset
   }
 
-  def getStatus: String = s"floor=$floor, open=$opened, users=$users, " +
-    s"direction=$direction, calls=${getCalls()}}, gos=${getGos()}"
+  def getStatus: String = s"""
+      floor=$floor
+      users=$users
+      door=${if (opened) "OPEN" else "CLOSE" }
+      direction=$direction
+      waiters=${debugWaiters()}
+      calls=${debugCalls()}
+      gos=${debugGos()}"""
+
+  def debugGos() = strategy.gos.mkString(",")
+  def debugCalls() = strategy.calls.mkString(",")
+  def debugWaiters() = waiters.filterByPositive()
+    .map(waiter => s"Floor(${waiter._1}, ${waiter._2})")
+    .mkString(",")
+  
+}
+
+class Waiters extends Reset {
+
+  var waitersByFloor = emptyWaiters
+
+  def filterByPositive() = waitersByFloor.filter(_._2 > 0)
+    .toList
+    .sortBy(_._1)
+
+  def addAt(floor: Int) {
+    waitersByFloor(floor) += 1
+  }
+
+  def removeAt(floor: Int) {
+    if (countAt(floor) > 0) waitersByFloor(floor) -= 1
+  }
+
+  def countAt(floor: Int) = waitersByFloor(floor)
+
+  def reset(): Unit = emptyWaiters
+
+  def emptyWaiters = Map[Int, Int]().withDefaultValue(0)
 }
 
 trait Strategy {
@@ -62,24 +116,18 @@ trait Strategy {
   var calls: Set[Call] = Set()
   var gos: Set[Go] = Set()
 
-  def addCall(atFloor: Int, direction: Direction) = {
-    calls += new Call(atFloor, direction)
+  def addCall(fromFloor: Int, atFloor: Int, direction: Direction) = {
+    calls += new Call(fromFloor, atFloor, direction)
   }
 
-  def addGo(toFloor: Int) = {
-    gos += new Go(toFloor)
+  def addGo(fromFloor: Int, toFloor: Int) = {
+    gos += new Go(fromFloor, toFloor)
   }
 
-  def getNextCommand(elevator: Elevator): String
+  def nextCommand(elevator: Elevator): String
 
-  def addGo(go: Go) = gos += go
-  def addCall(call: Call) = calls += call
   def canDoNothing(elevator: Elevator) = elevator.isAtMiddle && hasNoCallAndGo()
   def hasNoCallAndGo() = gos.isEmpty && calls.isEmpty
-
-  def hasNoGo() = gos.isEmpty
-  def hasOneCall() = calls.size == 1
-  def firstCallDirection() = calls.head.direction
 
   def reset = {
     gos = Set()
@@ -95,7 +143,7 @@ class DirectionStrategy extends Strategy {
     else DownCommand
   }
 
-  def getNextCommand(elevator: Elevator): String = {
+  def nextCommand(elevator: Elevator): String = {
     val needsToInverseDirection = elevator.needsToInverseDirection()
     if (needsToInverseDirection) {
       Logger.debug("At top or bottom floor => inverse the direction")
@@ -170,7 +218,7 @@ class DirectionStrategy extends Strategy {
 
 class OpenCloseStrategy extends DirectionStrategy {
 
-  override def getNextCommand(elevator: Elevator): String = {
+  override def nextCommand(elevator: Elevator): String = {
     Logger.debug(s"Current calls=$calls, gos=$gos")
 
     if (needsStop(elevator)) {
@@ -180,7 +228,7 @@ class OpenCloseStrategy extends DirectionStrategy {
     }
     if (elevator.opened) return CloseCommand.to(elevator)
 
-    return super.getNextCommand(elevator)
+    return super.nextCommand(elevator)
   }
 
   def needsStop(elevator: Elevator): Boolean = {
