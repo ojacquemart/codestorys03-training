@@ -49,28 +49,30 @@ object CommandSpec extends Specification {
   "Open command" should {
 
     "do nothing when doors are already opened" in {
-      elevator.opened = true
+      elevator.door = Door.OPEN
       OpenCommand.to(elevator) must be equalTo("NOTHING")
+      elevator.door must be equalTo(Door.OPEN)
     }
 
     "open doors if doors are closed" in {
-      elevator.opened = false
+      elevator.door = Door.CLOSE
       OpenCommand.to(elevator) must be equalTo("OPEN")
-      elevator.opened must beTrue
+      elevator.door must be equalTo(Door.OPEN)
     }
   }
 
   "Close command" should {
 
     "do nothing when doors are already closed" in {
-      elevator.opened = false
+      elevator.door = Door.CLOSE
       CloseCommand.to(elevator) must be equalTo("NOTHING")
+      elevator.door must be equalTo(Door.CLOSE)
     }
 
     "close doors if doors are opened" in {
-      elevator.opened = true
+      elevator.door = Door.OPEN
       CloseCommand.to(elevator) must be equalTo("CLOSE")
-      elevator.opened must beFalse
+      elevator.door must be equalTo(Door.CLOSE)
     }
   }
 

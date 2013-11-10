@@ -1,5 +1,5 @@
 package models
 
-object Door {
-
+object Door extends Enumeration {
+  val OPEN, CLOSE = Value
 }

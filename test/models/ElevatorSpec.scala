@@ -12,19 +12,21 @@ object ElevatorSpec extends Specification {
     "get default values" in {
       elevator.floor should be equalTo (0)
       elevator.direction should be equalTo (UP)
-      elevator.opened should beFalse
+      elevator.door should be equalTo(Door.CLOSE)
     }
 
     "reset values" in {
-      elevator.floor = 1
+      elevator.users = 10
       elevator.direction = DOWN
-      elevator.opened = true
+      elevator.floor = 1
+      elevator.door = Door.OPEN
 
       elevator.resetToFloor(0)
 
       elevator.floor should be equalTo (0)
+      elevator.users must be equalTo(0)
       elevator.direction should be equalTo (UP)
-      elevator.opened should beFalse
+      elevator.door must be equalTo(Door.CLOSE)
     }
 
     "reset lower floor" in {
@@ -103,7 +105,13 @@ object ElevatorSpec extends Specification {
 
       waiters.removeAt(3)
       waiters.countAt(3) must be equalTo(0)
+
+      waiters.addAt(0)
+      waiters.addAt(1)
+      waiters.reset
+      waiters.filterByPositive().size must be equalTo(0)
     }
+
   }
 
   "DirectionStrategy" should {

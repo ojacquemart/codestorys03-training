@@ -32,8 +32,8 @@ object DownCommand extends Command {
 
 object OpenCommand extends Command {
   def to(elevator: Elevator): String = {
-    if (!elevator.opened) {
-      elevator.opened = true
+    if (elevator.door == Door.CLOSE) {
+      elevator.door = Door.OPEN
       "OPEN"
     }
     else NothingCommand.to(elevator)
@@ -42,8 +42,8 @@ object OpenCommand extends Command {
 
 object CloseCommand extends Command {
   def to(elevator: Elevator): String = {
-    if (elevator.opened) {
-      elevator.opened = false
+    if (elevator.door == Door.OPEN) {
+      elevator.door = Door.CLOSE
       "CLOSE"
     }
     else NothingCommand.to(elevator)

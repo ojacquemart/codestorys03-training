@@ -16,7 +16,7 @@ trait Elevator extends Reset {
   var floor: Int = 0
 
   var direction: Direction = UP
-  var opened: Boolean = false
+  var door = Door.CLOSE
 
   var users = 0
   var waiters = new Waiters
@@ -46,10 +46,11 @@ trait Elevator extends Reset {
   }
 
   override def reset() = {
+    Logger.debug("Elevator reset")
     users = 0
-    waiters.reset
     direction = UP
-    opened = false
+    door = Door.CLOSE
+    waiters.reset
   }
 }
 
@@ -74,14 +75,14 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends Elevator wi
   def getStatus: String = s"""
       floor=$floor
       users=$users
-      door=${if (opened) "OPEN" else "CLOSE" }
+      door=$door
       direction=$direction
       waiters=${debugWaiters()}
       calls=${debugCalls()}
       gos=${debugGos()}"""
 
-  def debugGos() = strategy.gos.mkString(",")
-  def debugCalls() = strategy.calls.mkString(",")
+  def debugGos() = strategy.gos.toList.sortBy(_.toFloor).mkString(",")
+  def debugCalls() = strategy.calls.toList.sortBy(_.toFloor).mkString(",")
   def debugWaiters() = waiters.filterByPositive()
     .map(waiter => s"Floor(${waiter._1}, ${waiter._2})")
     .mkString(",")
@@ -106,7 +107,9 @@ class Waiters extends Reset {
 
   def countAt(floor: Int) = waitersByFloor(floor)
 
-  def reset(): Unit = emptyWaiters
+  def reset() {
+    waitersByFloor = emptyWaiters
+  }
 
   def emptyWaiters = Map[Int, Int]().withDefaultValue(0)
 }
@@ -130,8 +133,9 @@ trait Strategy {
   def hasNoCallAndGo() = gos.isEmpty && calls.isEmpty
 
   def reset = {
-    gos = Set()
+    Logger.debug("Reset calls and gos")
     calls = Set()
+    gos = Set()
   }
 
 }
@@ -222,11 +226,13 @@ class OpenCloseStrategy extends DirectionStrategy {
     Logger.debug(s"Current calls=$calls, gos=$gos")
 
     if (needsStop(elevator)) {
-      if (!elevator.opened) {
+      if (elevator.door == Door.CLOSE) {
         return OpenCommand.to(elevator)
       }
     }
-    if (elevator.opened) return CloseCommand.to(elevator)
+    if (elevator.door == Door.OPEN) return CloseCommand.to(elevator)
+
+    gos.foreach(_.ticks += 1)
 
     return super.nextCommand(elevator)
   }
