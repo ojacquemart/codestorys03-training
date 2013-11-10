@@ -14,7 +14,7 @@ object Application extends Controller {
   }
 
   def reset(lowerFloor: Int, higherFloor: Int, cause: String) = Action {
-    Logger.info(s""""RESET RESET RESET
+    Logger.info(s"""RESET RESET RESET
            Reset $lowerFloor - $higherFloor for '$cause'""")
     elevator.resetToFloor(lowerFloor)
 
