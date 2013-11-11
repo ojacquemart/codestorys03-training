@@ -2,8 +2,6 @@ package models
 
 import play.api.Logger
 
-import scala.collection.mutable.Map
-
 trait Reset {
   def reset(): Unit
 }
@@ -14,129 +12,102 @@ trait Elevator extends Reset {
   val middleFloor = maxFloor / 2
 
   var floor: Int = 0
-
   var direction: Direction = UP
   var door = Door.CLOSE
+  var points = 0
 
-  var users = 0
-  var waiters = new Waiters
+  val users = new Users
+
+  // To store the next goTo and update theirs values to the users.
+  var nextFloorsToGo = scala.collection.mutable.MutableList[Int]()
 
   def needsToInverseDirection(): Boolean = (direction == UP && isAtTop) || (direction == DOWN && isAtBottom)
-
   def isAtTop: Boolean = floor == maxFloor - 1
   def isAtBottom: Boolean = floor == 0
+
   def isAtMiddle: Boolean = floor == middleFloor
 
   def call(atFloor: Int, direction: Direction) {
-    waiters.addAt(atFloor)
+    users.add(atFloor, direction)
   }
 
-  def go(toFloor: Int) = { }
+  def userHasEntered {}
 
-  def userHasEntered = {
-    users += 1
-    waiters.removeAt(floor)
+  def go(toFloor: Int) {
+    nextFloorsToGo += toFloor
   }
+  def onUserExited {}
 
-  def onUserExited = users -= 1
+  def canStop(): Boolean
 
-  def resetToFloor(lowerFloor: Int = 0) = {
+  def isEmpty() = users.size == 0
+
+  def resetToFloor(lowerFloor: Int = 0) {
     floor = lowerFloor
     reset()
   }
 
   override def reset() = {
     Logger.debug("Elevator reset")
-    users = 0
     direction = UP
     door = Door.CLOSE
-    waiters.reset
+    users.reset
   }
 }
 
-case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends Elevator with Reset {
+case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends Elevator {
 
-  def nextCommand() = strategy.nextCommand(this)
+  def nextCommand() = {
+    updateNextsToFloor()
 
-  override def call(atFloor: Int, direction: Direction) {
-    super.call(atFloor, direction)
-    strategy.addCall(floor, atFloor, direction)
+    users.tick()
+    users.removeDone()
+
+    strategy.nextCommand(this)
+  }
+  
+  def updateNextsToFloor() = {
+    Logger.debug(s"@@@ Add next floors... $nextFloorsToGo")
+    nextFloorsToGo.foreach(nextFloor => {
+      users.flagNextToFloorToDefine(floor)
+      users.goToFloor(nextFloor)
+    })
+    nextFloorsToGo = scala.collection.mutable.MutableList()
   }
 
-  override def go(toFloor: Int) = {
-    strategy.addGo(floor, toFloor)
-  }
-
-  override def reset() = {
-    super.reset()
-    strategy.reset
+  def canStop() = {
+    val canStop = users.canStopAt(floor, direction)
+    if (canStop) users.stopTravelersAt(floor)
+    canStop
   }
 
   def getStatus: String = s"""
+      points=$points
       floor=$floor
-      users=$users
+      users=${users.size}
       door=$door
       direction=$direction
-      waiters=${debugWaiters()}
-      calls=${debugCalls()}
-      gos=${debugGos()}"""
+      waitersByFloor=${debugWaitersByFloor()}
+      calls=${debugWaiters()}
+      travelers=${debugTravelers()}
+      """
 
-  def debugGos() = strategy.gos.toList.sortBy(_.toFloor).mkString(",")
-  def debugCalls() = strategy.calls.toList.sortBy(_.toFloor).mkString(",")
-  def debugWaiters() = waiters.filterByPositive()
-    .map(waiter => s"Floor(${waiter._1}, ${waiter._2})")
-    .mkString(",")
+  def debugWaitersByFloor() = users.waiters
+      .groupBy(_.fromFloor)
+      .map(waitersByFloor => (waitersByFloor._1, waitersByFloor._2.size))
+      .toList
+      .sortBy(_._1)
+      .map(w => s"${w._1} -> ${w._2}").mkString(", ")
+  def debugTravelers() = users.travelers.sortBy(_.toFloor).mkString(",")
+  def debugWaiters() = users.waiters.sortBy(_.toFloor).mkString(",")
   
-}
-
-class Waiters extends Reset {
-
-  var waitersByFloor = emptyWaiters
-
-  def filterByPositive() = waitersByFloor.filter(_._2 > 0)
-    .toList
-    .sortBy(_._1)
-
-  def addAt(floor: Int) {
-    waitersByFloor(floor) += 1
-  }
-
-  def removeAt(floor: Int) {
-    if (countAt(floor) > 0) waitersByFloor(floor) -= 1
-  }
-
-  def countAt(floor: Int) = waitersByFloor(floor)
-
-  def reset() {
-    waitersByFloor = emptyWaiters
-  }
-
-  def emptyWaiters = Map[Int, Int]().withDefaultValue(0)
 }
 
 trait Strategy {
 
-  var calls: Set[Call] = Set()
-  var gos: Set[Go] = Set()
-
-  def addCall(fromFloor: Int, atFloor: Int, direction: Direction) = {
-    calls += new Call(fromFloor, atFloor, direction)
-  }
-
-  def addGo(fromFloor: Int, toFloor: Int) = {
-    gos += new Go(fromFloor, toFloor)
-  }
-
   def nextCommand(elevator: Elevator): String
 
-  def canDoNothing(elevator: Elevator) = elevator.isAtMiddle && hasNoCallAndGo()
-  def hasNoCallAndGo() = gos.isEmpty && calls.isEmpty
-
-  def reset = {
-    Logger.debug("Reset calls and gos")
-    calls = Set()
-    gos = Set()
-  }
+  def canDoNothing(elevator: Elevator) = elevator.isAtMiddle && elevator.isEmpty()
 
 }
 
@@ -165,11 +136,9 @@ class DirectionStrategy extends Strategy {
     }
   }
 
-
   def findBestDirection(elevator: Elevator) = {
-    if (hasNoCallAndGo()) forceDirectionToMiddleFloor(elevator)
+    if (elevator.isEmpty()) forceDirectionToMiddleFloor(elevator)
     else findBestDirectionByCurrentDirection(elevator)
-
   }
 
   def forceDirectionToMiddleFloor(elevator: Elevator): Direction = {
@@ -182,85 +151,29 @@ class DirectionStrategy extends Strategy {
     val direction = elevator.direction
     Logger.debug(s"Look if has stop in current direction: $direction")
 
-    val (gosSameDirection, gosOtherDirection) = gos.partition(go => go.currentDirection(elevator.floor) == elevator.direction)
-    if (gosSameDirection.size > 0) {
-      Logger.debug(s"Stops in current direction: continue ${direction}")
-      return direction
+    elevator.users.getDirectionTypeForTravelers(elevator.floor, elevator.direction) match {
+      case NextDirectionType.SAME_AS_CURRENT => direction
+      case NextDirectionType.INVERSE => direction.inverse
+      case _ => findDirectionByWaiters(elevator)
     }
-    if (gosOtherDirection.size > 0) {
-      Logger.debug(s"No stops in current direction: inverse direction to ${direction.inverse}")
-      return direction.inverse
-    }
-
-    return findDirectionByCalls(elevator)
   }
 
-  def findDirectionByCalls(elevator: Elevator): Direction = {
-    if (calls.isEmpty) {
-      Logger.debug("No call, force direction to middle floor")
-      return forceDirectionToMiddleFloor(elevator)
+  def findDirectionByWaiters(elevator: Elevator): Direction = {
+    elevator.users.getDirectionTypeForWaiters(elevator.floor, elevator.direction) match {
+      case NextDirectionType.TO_UP => UP
+      case NextDirectionType.TO_DOWN => DOWN
+      case _ => forceDirectionToMiddleFloor(elevator)
     }
-
-    val firstCallFloor = nearestFloorByCurrentFloor(elevator.floor)
-    Logger.debug(s"Lets go the first call: $firstCallFloor")
-    val goesUp = needsToGoUp(elevator.floor, firstCallFloor)
-    Logger.debug(s"\tNeeds to go up: $goesUp")
-
-    if (goesUp) UP else DOWN
   }
-
-  def nearestFloorByCurrentFloor(currentFloor: Int): Int = {
-    calls.toList
-      .sortBy(_.toFloor)
-      .minBy(call => Math.abs(currentFloor - call.toFloor))
-      .toFloor
-  }
-
-  def needsToGoUp(currentFloor: Int, toFloor: Int) = currentFloor < toFloor
 
 }
 
 class OpenCloseStrategy extends DirectionStrategy {
 
   override def nextCommand(elevator: Elevator): String = {
-    Logger.debug(s"Current calls=$calls, gos=$gos")
-
-    if (needsStop(elevator)) {
-      if (elevator.door == Door.CLOSE) {
-        return OpenCommand.to(elevator)
-      }
-    }
-    if (elevator.door == Door.OPEN) return CloseCommand.to(elevator)
-
-    gos.foreach(_.ticks += 1)
-
-    return super.nextCommand(elevator)
-  }
-
-  def needsStop(elevator: Elevator): Boolean = {
-    // Lists of Option[SimpleStop] to check stops.
-    val neededStops = List(getStopFromFloor(elevator.floor),
-      getCallFromFloorFloorInCurrentDirection(elevator))
-    val needsStop = neededStops.count(_.size == 1) > 0
-    Logger.debug(s"Needs stop = $needsStop for $neededStops from floor ${elevator.floor} to ${elevator.direction}")
-
-    if (needsStop) {
-      neededStops.foreach(maybeStop => maybeStop match {
-        case Some(go: Go) => gos -= go
-        case Some(call: Call) => calls = calls.filterNot(_.toFloor == call.toFloor)
-        case _ => {}
-      })
-    }
-
-    needsStop
-  }
-
-  def getStopFromFloor(floor: Int): Option[Go] = gos.find(go => go.toFloor == floor)
-
-  def getCallFromFloorFloorInCurrentDirection(elevator: Elevator) = {
-    // No gos, check if has one call whatever the direction
-    if (gos.isEmpty) calls.find(_.toFloor == elevator.floor)
-    else calls.find(c => c.toFloor == elevator.floor && c.direction == elevator.direction)
+    if (elevator.canStop() && elevator.door == Door.CLOSE) OpenCommand.to(elevator)
+    else if (elevator.door == Door.OPEN) CloseCommand.to(elevator)
+    else super.nextCommand(elevator)
   }
 }
 

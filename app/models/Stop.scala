@@ -3,10 +3,9 @@ package models
 trait Stop {
   def fromFloor: Int
   def toFloor: Int
-  def ticks: Int
 }
 
-case class Call(fromFloor: Int, toFloor: Int, direction: Direction, ticks: Int = 0) extends Stop {
+case class Call(fromFloor: Int, toFloor: Int, direction: Direction) extends Stop {
 
   override def hashCode(): Int = toFloor + direction.hashCode()
 
@@ -17,8 +16,8 @@ case class Call(fromFloor: Int, toFloor: Int, direction: Direction, ticks: Int =
 
   override def toString: String = s"Call(to=$toFloor,direction=$direction)"
 }
-case class Go(fromFloor: Int, toFloor: Int, var ticks: Int = 0) extends Stop {
 
+case class Go(fromFloor: Int, toFloor: Int) extends Stop {
 
   override def hashCode(): Int = toFloor + toFloor.hashCode()
 
@@ -28,5 +27,5 @@ case class Go(fromFloor: Int, toFloor: Int, var ticks: Int = 0) extends Stop {
   }
 
   def currentDirection(currentFloor: Int) =  if (currentFloor >= toFloor) DOWN else UP
-  override def toString: String = s"Stop(to=$toFloor, ticks=$ticks)"
+  override def toString: String = s"Stop(to=$toFloor)"
 }
