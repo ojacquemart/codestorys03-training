@@ -7,6 +7,8 @@ object ElevatorSpec extends Specification {
   val MaxFloor = 20
   val elevator = new SimpleElevator(MaxFloor, new OpenCloseStrategy())
 
+  val emptyUser = new User(1, DOWN)
+
   "Elevator" should {
 
     "get default values" in {
@@ -16,10 +18,10 @@ object ElevatorSpec extends Specification {
     }
 
     "reset values" in {
-      elevator.users = 10
       elevator.direction = DOWN
       elevator.floor = 1
       elevator.door = Door.OPEN
+      elevator.users +=
 
       elevator.resetToFloor(0)
 

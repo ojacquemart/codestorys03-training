@@ -2,9 +2,7 @@ package models
 
 import play.api.Logger
 
-trait Reset {
-  def reset(): Unit
-}
+import scala.collection.mutable.MutableList
 
 trait Elevator extends Reset {
 
@@ -19,7 +17,7 @@ trait Elevator extends Reset {
   val users = new Users
 
   // To store the next goTo and update theirs values to the users.
-  var nextFloorsToGo = scala.collection.mutable.MutableList[Int]()
+  var nextFloorsToGo = MutableList[Int]()
 
   def needsToInverseDirection(): Boolean = (direction == UP && isAtTop) || (direction == DOWN && isAtBottom)
   def isAtTop: Boolean = floor == maxFloor - 1
@@ -39,6 +37,8 @@ trait Elevator extends Reset {
   def onUserExited {}
 
   def canStop(): Boolean
+  def getDirectionTypeForTravelers(): NextDirectionType.Value
+  def getDirectionTypeForWaiters(): NextDirectionType.Value
 
   def isEmpty() = users.size == 0
 
@@ -47,7 +47,7 @@ trait Elevator extends Reset {
     reset()
   }
 
-  override def reset() = {
+  def reset(): Unit = {
     Logger.debug("Elevator reset")
     direction = UP
     door = Door.CLOSE
@@ -58,35 +58,39 @@ trait Elevator extends Reset {
 case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends Elevator {
 
   def nextCommand() = {
-    updateNextsToFloor()
-
+    nextFloorsToGo = users.updateNextFloorsToGo(floor, nextFloorsToGo)
     users.tick()
     users.removeDone()
 
     strategy.nextCommand(this)
   }
-  
-  def updateNextsToFloor() = {
-    Logger.debug(s"@@@ Add next floors... $nextFloorsToGo")
-    nextFloorsToGo.foreach(nextFloor => {
-      users.flagNextToFloorToDefine(floor)
-      users.goToFloor(nextFloor)
-    })
-    nextFloorsToGo = scala.collection.mutable.MutableList()
-  }
 
   def canStop() = {
     val canStop = users.canStopAt(floor, direction)
-    if (canStop) users.stopTravelersAt(floor)
+    if (canStop) {
+      Logger.debug("Stop travelers and update points")
+      users.stopTravelersAt(floor)
+      points += users.donerScores
+    }
     canStop
+  }
+
+  def getDirectionTypeForTravelers(): NextDirectionType.Value = {
+    users.getDirectionTypeForTravelers(floor, direction)
+  }
+
+  def getDirectionTypeForWaiters(): NextDirectionType.Value = {
+    users.getDirectionTypeForWaiters(floor, direction)
   }
 
   def getStatus: String = s"""
       points=$points
       floor=$floor
-      users=${users.size}
       door=$door
       direction=$direction
+      totalUsers=${users.size}
+      nbWaiters=${users.waiters.size}
+      nbTravelers=${users.travelers.size}
       waitersByFloor=${debugWaitersByFloor()}
       calls=${debugWaiters()}
       travelers=${debugTravelers()}
@@ -151,7 +155,7 @@ class DirectionStrategy extends Strategy {
     val direction = elevator.direction
     Logger.debug(s"Look if has stop in current direction: $direction")
 
-    elevator.users.getDirectionTypeForTravelers(elevator.floor, elevator.direction) match {
+    elevator.getDirectionTypeForTravelers() match {
       case NextDirectionType.SAME_AS_CURRENT => direction
       case NextDirectionType.INVERSE => direction.inverse
       case _ => findDirectionByWaiters(elevator)
@@ -159,7 +163,7 @@ class DirectionStrategy extends Strategy {
   }
 
   def findDirectionByWaiters(elevator: Elevator): Direction = {
-    elevator.users.getDirectionTypeForWaiters(elevator.floor, elevator.direction) match {
+    elevator.getDirectionTypeForWaiters() match {
       case NextDirectionType.TO_UP => UP
       case NextDirectionType.TO_DOWN => DOWN
       case _ => forceDirectionToMiddleFloor(elevator)

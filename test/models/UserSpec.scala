@@ -133,11 +133,25 @@ object UserSpec extends Specification {
 
   "Users" should {
 
-    "add users and get size" in {
+    def threeUsers = {
       val users = new Users()
       users.add(0, UP)
       users.add(0, DOWN)
       users.add(10, DOWN)
+
+      users
+    }
+
+    "reset" in {
+      val users = threeUsers
+
+      users.size must be >=(0)
+      users.reset
+      users.size must be equalTo(0)
+    }
+
+    "add users and get size" in {
+      val users = threeUsers
 
       users.size must be equalTo(3)
     }

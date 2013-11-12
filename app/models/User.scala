@@ -26,8 +26,28 @@ class Users extends Reset {
     users += user
   }
 
+  /**
+   * Update the toFloor for users who were waiting and just entered in the cabin.
+   *
+   * @param floor the current floor
+   * @param nextFloorsToGo the next floors to update.
+   *
+   * @return an empty Mutable list.
+   */
+  def updateNextFloorsToGo(floor: Int, nextFloorsToGo: MutableList[Int]): MutableList[Int] = {
+    Logger.debug(s"@@@ Add next floors... $nextFloorsToGo")
+    nextFloorsToGo.foreach(nextFloor => {
+      flagNextToFloorToDefine(floor)
+      goToFloor(nextFloor)
+    })
+    MutableList()
+  }
+
   def travelers = users.filter(_.isTraveling())
   def waiters = users.filter(_.isWaiting())
+  def doners = users.filter(_.isDone())
+
+  def donerScores: Int = doners.map(_.score()).sum
 
   // When user has entered
   def flagNextToFloorToDefine(floor: Int) = {
@@ -51,7 +71,7 @@ class Users extends Reset {
   def canStopAt(floor: Int, to: Direction): Boolean = {
     if (hasNoTravelers()) {
       val waitersAt = hasWaitersAt(floor)
-      Logger.debug(s"No travelers, waiters at $floor: $waitersAt")
+      Logger.debug(s"No travelers, waiters are at $floor: $waitersAt")
       waitersAt
     }
     else {
@@ -59,7 +79,7 @@ class Users extends Reset {
       if (canStopForTravelerOrWaiterAt) return true
 
       val canStopForLoserAt = hasTravelersAtAndLosing(floor)
-      Logger.debug(s"Only losers traveling at $floor to $to: $canStopForLoserAt")
+      Logger.debug(s"Only losers traveling are at $floor to $to: $canStopForLoserAt")
       return canStopForLoserAt
     }
   }
@@ -68,8 +88,8 @@ class Users extends Reset {
     Logger.debug(s"Travelers ${users.filter(_.state == UserState.TRAVELING)}")
     val travelersAtScoring = hasTravelersAtAndScoring(floor)
     val waitersAtInDirection = hasWaitersAtInDirection(floor, to)
-    Logger.debug(s"Travelers scoring at $floor: $travelersAtScoring")
-    Logger.debug(s"Waiters at $floor in direction $to: $waitersAtInDirection")
+    Logger.debug(s"Travelers are scoring at $floor: $travelersAtScoring")
+    Logger.debug(s"Waiters are at $floor in direction $to: $waitersAtInDirection")
     val canStop = travelersAtScoring || waitersAtInDirection
     Logger.debug(s"\tCan stop for traveler or waiter at $floor in direction $to: $canStop")
 
@@ -110,7 +130,8 @@ class Users extends Reset {
       NextDirectionType.TO_MIDDLE_FLOOR
     }
     else {
-      val nearestWaiter = waiters.sortBy(_.toFloor)
+      val nearestWaiter = waiters
+        .sortBy(_.toFloor)
         .minBy(waiter => Math.abs(floor - waiter.toFloor))
 
       Logger.debug(s"Lets go the first waiter: $nearestWaiter")
