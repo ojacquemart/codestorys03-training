@@ -5,7 +5,7 @@ import org.specs2.mutable.Specification
 object CommandSpec extends Specification {
 
   val MaxFloor = 20
-  val elevator = new SimpleElevator(MaxFloor, new DirectionStrategy())
+  val elevator = new SimpleElevator(MaxFloor, 10, new DirectionStrategy())
 
   "Nothing command" should {
     "do nothing" in {

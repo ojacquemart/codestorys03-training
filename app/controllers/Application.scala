@@ -7,16 +7,16 @@ import models._
 
 object Application extends Controller {
 
-  val elevator = new SimpleElevator(20, new OpenCloseStrategy())
+  val elevator = new SimpleElevator(20, 100, new OpenCloseStrategy())
 
   def ping = Action {
     Ok
   }
 
-  def reset(lowerFloor: Int, higherFloor: Int, cause: String) = Action {
+  def reset(lowerFloor: Int, higherFloor: Int, cabinSize: Int, cause: String) = Action {
     Logger.info(s"""@@@ RESET
-           Reset $lowerFloor - $higherFloor for '$cause'""")
-    elevator.resetToFloor(lowerFloor)
+           Reset lower=$lowerFloor, higher=$higherFloor, cabinSize=$cabinSize, cause='$cause'""")
+    elevator.resetToFloor(lowerFloor, higherFloor, cabinSize)
 
     Ok
   }

@@ -6,9 +6,10 @@ import scala.collection.mutable.MutableList
 
 trait Elevator extends Reset {
 
-  val maxFloor: Int
-  val middleFloor = maxFloor / 2
+  var maxFloor: Int
+  var cabinSize: Int
 
+  def middleFloor = maxFloor / 2
   var floor: Int = 0
   var direction: Direction = UP
   var door = Door.CLOSE
@@ -49,8 +50,10 @@ trait Elevator extends Reset {
 
   def isEmpty() = users.size == 0
 
-  def resetToFloor(lowerFloor: Int = 0) {
+  def resetToFloor(lowerFloor: Int = 0, higherFloor: Int = 19, maxCabinSize: Int = 30) {
     floor = lowerFloor
+    maxFloor = higherFloor
+    cabinSize = maxCabinSize
     reset()
   }
 
@@ -62,16 +65,14 @@ trait Elevator extends Reset {
   }
 }
 
-case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends Elevator {
+case class SimpleElevator(var maxFloor: Int, var cabinSize: Int, strategy: Strategy) extends Elevator {
 
   def nextCommand() = {
     nextFloorsToGo = users.updateNextFloorsToGo(floor, nextFloorsToGo)
     users.tick()
-
-    val command = strategy.nextCommand(this)
     users.removeDone()
 
-    command
+    strategy.nextCommand(this)
   }
 
   def canStop() = {
