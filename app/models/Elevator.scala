@@ -92,7 +92,7 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends Elevator {
       nbWaiters=${users.waiters.size}
       nbTravelers=${users.travelers.size}
       waitersByFloor=${debugWaitersByFloor()}
-      calls=${debugWaiters()}
+      waiters=${debugWaiters()}
       travelers=${debugTravelers()}
       """
 

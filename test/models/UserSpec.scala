@@ -89,6 +89,14 @@ object UserSpec extends Specification {
       user.directionByFloor(6) must be equalTo(DOWN)
     }
 
+    "check if needs to up" in {
+      val user = newUser
+      user.needsToGoUp(5, 7) must beTrue
+      user.needsToGoUp(5, 6) must beTrue
+      user.needsToGoUp(5, 5) must beFalse
+      user.needsToGoUp(5, 4) must beFalse
+    }
+
     "tick" in {
       val user = newUser
       user.tick()
@@ -270,7 +278,7 @@ object UserSpec extends Specification {
 
     import NextDirectionType._
 
-    "decide direction when travelers" in {
+    "decide best direction when travelers" in {
       val users = usersWithTravelersAndWaiters
       users.getDirectionTypeForTravelers(1, UP) must be equalTo(SAME_AS_CURRENT)
       users.getDirectionTypeForTravelers(3, DOWN) must be equalTo(SAME_AS_CURRENT)
@@ -278,9 +286,40 @@ object UserSpec extends Specification {
       users.getDirectionTypeForTravelers(7, UP) must be equalTo(INVERSE)
     }
 
-    "decide direction when no travelers and only waiters" in {
+    "decide best direction when no travelers and only waiters" in {
       val users = usersWithOnlyWaiters
 
+      /**
+       *  "get calls in current direction when no go" in {
+      elevator.resetToFloor(5)
+      elevator.direction = DOWN
+      strategy.reset
+
+      strategy.getCallFromFloorFloorInCurrentDirection(elevator).size must be equalTo(0)
+      strategy.addCall(fromFloor = 5, atFloor = 5, DOWN)
+      strategy.getCallFromFloorFloorInCurrentDirection(elevator).size must be equalTo(1)
+    }
+
+        "find nearest call to go" in {
+      strategy.reset
+      strategy.addCall(fromFloor = 0, atFloor = 2, UP)
+      strategy.addCall(fromFloor = 0, atFloor = 5, UP)
+      strategy.addCall(fromFloor = 0, atFloor = 7, UP)
+      strategy.addCall(fromFloor = 0, atFloor = 11, UP)
+      strategy.addCall(fromFloor = 0, atFloor = 15, UP)
+      strategy.addCall(fromFloor = 0, atFloor = 19, UP)
+
+      strategy.nearestFloorByCurrentFloor(1) must be equalTo(2)
+      strategy.nearestFloorByCurrentFloor(4) must be equalTo(5)
+      strategy.nearestFloorByCurrentFloor(6) must be equalTo(5)
+      strategy.nearestFloorByCurrentFloor(10) must be equalTo(11)
+      strategy.nearestFloorByCurrentFloor(13) must be equalTo(11)
+      strategy.nearestFloorByCurrentFloor(16) must be equalTo(15)
+      strategy.nearestFloorByCurrentFloor(17) must be equalTo(15)
+      strategy.nearestFloorByCurrentFloor(18) must be equalTo(19)
+    }
+
+       */
       // TODO: decide when no waiters
       1 == 1
     }
