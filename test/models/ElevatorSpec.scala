@@ -34,7 +34,7 @@ object ElevatorSpec extends Specification {
       elevator.floor = 2
       elevator.resetToFloor(10, 20, 15)
       elevator.floor must be equalTo(10)
-      elevator.maxFloor must be equalTo(20)
+      elevator.higherFloor must be equalTo(20)
       elevator.cabinSize must be equalTo(15)
     }
 
@@ -71,6 +71,15 @@ object ElevatorSpec extends Specification {
     "can do nothing when at middle floor" in {
       elevator.floor = 10
       elevator.canDoNothing() must beTrue
+    }
+
+    "respect the cabin size" in {
+      elevator.resetToFloor(10, 20, 10)
+      elevator.canBringOneMoreTraveler(9) must beTrue
+      elevator.canBringOneMoreTraveler(10) must beFalse
+      elevator.canBringOneMoreTraveler(11) must beFalse
+      elevator.canBringOneMoreTraveler(8) must beTrue
+      elevator.canBringOneMoreTraveler(7) must beTrue
     }
 
   }

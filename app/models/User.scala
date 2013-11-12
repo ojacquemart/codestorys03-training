@@ -43,6 +43,7 @@ class Users extends Reset {
     MutableList()
   }
 
+  def travelersSize = users.count(_.isTraveling())
   def travelers = users.filter(_.isTraveling())
   def waiters = users.filter(_.isWaiting())
   def doners = users.filter(_.isDone())
@@ -108,7 +109,7 @@ class Users extends Reset {
 
   def hasTravelersAtAndLosing(floor: Int) = users.count(_.isTravelingAtAndLosing(floor)) > 0
 
-  def tick() = users.foreach(_.tick())
+  def tick(floor: Int) = users.foreach(_.tick(floor))
   def checkStateAt(floor: Int) = users.foreach(_.stopTravelAt(floor))
   def removeDone() = users = users.filterNot(_.isDone)
 
@@ -188,6 +189,10 @@ case class User(fromFloor: Int, var toFloor: Int = -1, direction: Direction = UP
     }
   }
 
+  var currentFloor: Int = 0
+
+  def isAt(floor: Int) = currentFloor == floor
+
   def isWaitingAtInDirection(floor: Int, to: Direction) = isWaitingAt(floor) && direction == to
   def isWaitingAt(floor: Int) = isWaiting() && fromFloor == floor
   def isWaiting() = state == WAITING
@@ -206,7 +211,8 @@ case class User(fromFloor: Int, var toFloor: Int = -1, direction: Direction = UP
   def needsToGoUpFromFloorToFloor(floor: Int) = floor < fromFloor
   def directionFromToFloorByFloor(floor: Int) = if (floor > toFloor) DOWN else UP
 
-  def tick() = {
+  def tick(floor: Int) = {
+    currentFloor = floor
     state match {
       case WAITING => waitingTicks += 1
       case TRAVELING => travelingTicks += 1
@@ -224,7 +230,7 @@ case class User(fromFloor: Int, var toFloor: Int = -1, direction: Direction = UP
   }
 
   override def toString() = {
-    s"User(from=$fromFloor, to=$toFloor, direction=$direction, points=$score)"
+    s"(F=$fromFloor,T=$toFloor,D=$direction,S=$score)"
   }
 
 }

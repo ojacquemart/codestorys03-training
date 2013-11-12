@@ -6,10 +6,11 @@ import scala.collection.mutable.MutableList
 
 trait Elevator extends Reset {
 
-  var maxFloor: Int
+  var lowerFloor = 0
+  var higherFloor: Int
+  def middleFloor = higherFloor / 2
   var cabinSize: Int
 
-  def middleFloor = maxFloor / 2
   var floor: Int = 0
   var direction: Direction = UP
   var door = Door.CLOSE
@@ -21,7 +22,7 @@ trait Elevator extends Reset {
   var nextFloorsToGo = MutableList[Int]()
 
   def needsToInverseDirection(): Boolean = (direction == UP && isAtTop) || (direction == DOWN && isAtBottom)
-  def isAtTop: Boolean = floor == maxFloor - 1
+  def isAtTop: Boolean = floor == higherFloor - 1
   def isAtBottom: Boolean = floor == 0
 
   def isAtMiddle: Boolean = floor == middleFloor
@@ -33,8 +34,8 @@ trait Elevator extends Reset {
   }
 
   def call(atFloor: Int, direction: Direction) {
-    users.add(atFloor, direction)
-  }
+      users.add(atFloor, direction)
+    }
 
   def userHasEntered {}
 
@@ -44,6 +45,7 @@ trait Elevator extends Reset {
   def onUserExited {}
 
   def canDoNothing() = isAtMiddle && isEmpty()
+  def canBringOneMoreTraveler(travelersSize: Int): Boolean
   def canStop(): Boolean
   def getDirectionTypeForTravelers(): NextDirectionType.Value
   def getDirectionTypeForWaiters(): NextDirectionType.Value
@@ -52,24 +54,26 @@ trait Elevator extends Reset {
 
   def resetToFloor(lowerFloor: Int = 0, higherFloor: Int = 19, maxCabinSize: Int = 30) {
     floor = lowerFloor
-    maxFloor = higherFloor
-    cabinSize = maxCabinSize
+    this.lowerFloor = lowerFloor
+    this.higherFloor = higherFloor
+    this.cabinSize = maxCabinSize
     reset()
   }
 
   def reset(): Unit = {
     Logger.debug("Elevator reset")
+    points = 0
     direction = UP
     door = Door.CLOSE
     users.reset
   }
 }
 
-case class SimpleElevator(var maxFloor: Int, var cabinSize: Int, strategy: Strategy) extends Elevator {
+case class SimpleElevator(var higherFloor: Int, var cabinSize: Int, strategy: Strategy) extends Elevator {
 
   def nextCommand() = {
     nextFloorsToGo = users.updateNextFloorsToGo(floor, nextFloorsToGo)
-    users.tick()
+    users.tick(floor)
     users.removeDone()
 
     strategy.nextCommand(this)
@@ -85,6 +89,14 @@ case class SimpleElevator(var maxFloor: Int, var cabinSize: Int, strategy: Strat
     canStop
   }
 
+  def canBringOneMoreTraveler(travelersSize: Int) = {
+    val oneMoreTraveler = travelersSize + 1 <= cabinSize
+    if (!oneMoreTraveler) {
+      Logger.debug(s"One more traveler at $floor with $travelersSize travelers for a max size of $cabinSize: $oneMoreTraveler")
+    }
+    oneMoreTraveler
+  }
+
   def getDirectionTypeForTravelers(): NextDirectionType.Value = {
     users.getDirectionTypeForTravelers(floor, direction)
   }
@@ -94,25 +106,35 @@ case class SimpleElevator(var maxFloor: Int, var cabinSize: Int, strategy: Strat
   }
 
   def getStatus: String = s"""
-      points=$points
-      floor=$floor
-      door=$door
-      direction=$direction
+      points=$points, door=$door, direction=$direction
+      -
+      floor=$floor, higherFloor=$higherFloor, lowerFloor=$lowerFloor
+      -
       totalUsers=${users.size}
       nbWaiters=${users.waiters.size}
-      nbTravelers=${users.travelers.size}
+      cabinSize=$cabinSize, nbTravelers=${users.travelersSize}
+      -
       waitersByFloor=${debugWaitersByFloor()}
-      waiters=${debugWaiters()}
-      travelers=${debugTravelers()}
+      travelers=${debugTravelersByFloor()}
       """
 
-  def debugWaitersByFloor() = users.waiters
-      .groupBy(_.fromFloor)
-      .map(waitersByFloor => (waitersByFloor._1, waitersByFloor._2.size))
+  def debugWaitersByFloor() = {
+    val byFloor: (User) => Int = u => u.fromFloor
+    group(users.waiters, byFloor)
+  }
+  def debugTravelers() = users.travelers.sortBy(_.toFloor).mkString(",")
+  def debugTravelersByFloor() = {
+    val toFloor: (User) => Int = u => u.toFloor
+    group(users.travelers, toFloor)
+  }
+  
+  def group(list: MutableList[User], f: (User) => Int) = {
+    list.groupBy(f)
+      .map(u => (u._1, u._2.size))
       .toList
       .sortBy(_._1)
       .map(w => s"${w._1} -> ${w._2}").mkString(", ")
-  def debugTravelers() = users.travelers.sortBy(_.toFloor).mkString(",")
+  }
   def debugWaiters() = users.waiters.sortBy(_.toFloor).mkString(",")
   
 }

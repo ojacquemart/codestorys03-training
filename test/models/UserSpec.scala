@@ -6,7 +6,7 @@ import UserState._
 
 object Ticker {
   def tick100times(user: User) = {
-    for (i <- 1 to 100) user.tick()
+    for (i <- 1 to 100) user.tick(i)
   }
 }
 
@@ -80,10 +80,20 @@ object UserSpec extends Specification {
       user.isTravelingAtAndScoring(5) must beTrue
 
       val lostUser = newTraveler(0)
-      for (i <- 1 to 100) lostUser.tick()
+      for (i <- 1 to 100) lostUser.tick(i)
 
       lostUser.isTravelingAt(0) must beTrue
       lostUser.isTravelingAtAndScoring(0) must beFalse
+    }
+
+    "travel at a floor" in {
+      val user = newTraveler(5)
+      user.tick(0)
+      user.isAt(0) must beTrue
+      user.isAt(1) must beFalse
+      user.tick(1)
+      user.isAt(1) must beTrue
+      user.isAt(0) must beFalse
     }
 
     "get direction by a current floor" in {
@@ -102,18 +112,18 @@ object UserSpec extends Specification {
 
     "tick" in {
       val user = newUser
-      user.tick()
+      user.tick(0)
       user.travelingTicks must be equalTo(0)
       user.waitingTicks must be equalTo(1)
-      user.tick()
+      user.tick(1)
       user.travelingTicks must be equalTo(0)
       user.waitingTicks must be equalTo(2)
 
       user.travel()
-      user.tick()
+      user.tick(0)
       user.travelingTicks must be equalTo(1)
       user.waitingTicks must be equalTo(2)
-      user.tick()
+      user.tick(1)
       user.travelingTicks must be equalTo(2)
       user.waitingTicks must be equalTo(2)
     }
@@ -121,11 +131,11 @@ object UserSpec extends Specification {
     "score" in {
       val user = newUser
       // waiting 10 ticks...
-      for (i <- 0 until 10) user.tick()
+      for (i <- 0 until 10) user.tick(i)
 
       // traveling...
       user.travel()
-      for (i <- 0 to 5) user.tick()
+      for (i <- 0 to 5) user.tick(i)
 
       user.score() must be equalTo(16)
     }
