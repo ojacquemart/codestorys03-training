@@ -100,7 +100,8 @@ class Users extends Reset {
   def hasWaitersAt(floor: Int) = users.count(_.isWaitingAt(floor)) > 0
 
   def hasTravelersAtAndScoring(floor: Int): Boolean =
-    users.count(_.isTravelingAtAndScoring(floor)) > 0
+    // TODO: use isTravelingAtAndScoring to improve score when a large number of users.
+    users.count(_.isTravelingAt(floor)) > 0
 
   def hasWaitersAtInDirection(floor: Int, to: Direction) =
     users.count(_.isWaitingAtInDirection(floor, to)) > 0
@@ -113,7 +114,7 @@ class Users extends Reset {
 
   def getDirectionTypeForTravelers(floor: Int, to: Direction) = {
     val (travelersInDirection, travelersInInverseDirection) =
-      users.filter(_.isTraveling()).partition(u => u.directionByFloor(floor) == to)
+      users.filter(_.isTraveling()).partition(u => u.directionFromToFloorByFloor(floor) == to)
 
     Logger.debug(s"Travelers in direction: ${travelersInDirection.size}")
     Logger.debug(s"Travelers in inverse direction: ${travelersInInverseDirection.size}")
@@ -131,14 +132,14 @@ class Users extends Reset {
     }
     else {
       val nearestWaiter = waiters
-        .sortBy(_.toFloor)
-        .minBy(waiter => Math.abs(floor - waiter.toFloor))
+        .sortBy(_.fromFloor)
+        .minBy(waiter => Math.abs(floor - waiter.fromFloor))
 
       Logger.debug(s"Lets go the first waiter: $nearestWaiter")
-      val goesUp = nearestWaiter.needsToGoUp(floor)
-      Logger.debug(s"\tNeeds to go up: $goesUp")
+      val directionToWaiter = nearestWaiter.needsToGoUpFromFloorToFloor(floor)
+      Logger.debug(s"\tNeeds to go up $directionToWaiter from $floor to ${nearestWaiter.fromFloor}")
 
-      if (goesUp) NextDirectionType.TO_UP else NextDirectionType.TO_DOWN
+      if (directionToWaiter) NextDirectionType.TO_UP else NextDirectionType.TO_DOWN
     }
   }
 
@@ -191,7 +192,7 @@ case class User(fromFloor: Int, var toFloor: Int = -1, direction: Direction = UP
   def isWaitingAt(floor: Int) = isWaiting() && fromFloor == floor
   def isWaiting() = state == WAITING
 
-  def isTravelingAtAndScoring(floor: Int) = isTravelingAt(floor)// && score > 0
+  def isTravelingAtAndScoring(floor: Int) = isTravelingAt(floor) && score > 0
   def isTravelingAt(floor: Int) = isTraveling() && toFloor == floor
   def isTraveling() = state == TRAVELING
 
@@ -202,8 +203,8 @@ case class User(fromFloor: Int, var toFloor: Int = -1, direction: Direction = UP
   def travel() = state = TRAVELING
   def done() = state = DONE
 
-  def directionByFloor(floor: Int) = if (floor > toFloor) DOWN else UP
-  def needsToGoUp(floor: Int) = floor < toFloor
+  def needsToGoUpFromFloorToFloor(floor: Int) = floor < fromFloor
+  def directionFromToFloorByFloor(floor: Int) = if (floor > toFloor) DOWN else UP
 
   def tick() = {
     state match {

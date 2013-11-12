@@ -65,16 +65,16 @@ object ElevatorSpec extends Specification {
       elevator.needsToInverseDirection() must beTrue
     }
 
+    "can do nothing when at middle floor" in {
+      elevator.floor = 10
+      elevator.canDoNothing() must beTrue
+    }
+
   }
 
   "DirectionStrategy" should {
 
     val strategy = new DirectionStrategy()
-
-    "can do nothing when at middle floor" in {
-      elevator.floor = 10
-      strategy.canDoNothing(elevator) must beTrue
-    }
 
     "get UP command from UP direction" in {
       strategy.fromDirection(UP) must be equalTo(UpCommand)
@@ -107,7 +107,6 @@ object ElevatorSpec extends Specification {
     "force replacement at the middle floor" in {
       elevator.floor = 5
       strategy.forceDirectionToMiddleFloor(elevator) must be equalTo(UP)
-
       elevator.floor = 15
       strategy.forceDirectionToMiddleFloor(elevator) must be equalTo(DOWN)
     }
@@ -125,40 +124,45 @@ object ElevatorSpec extends Specification {
       elevator.nextCommand() must be equalTo("DOWN")
       elevator.nextCommand() must be equalTo("OPEN")
       elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.go(6)
       elevator.nextCommand() must be equalTo("UP")
+      elevator.users.waiters.size must be equalTo(1)
       elevator.nextCommand() must be equalTo("UP")
     }
 
     "change direction when no go and one call" in {
       elevator.resetToFloor(5)
       elevator.direction = UP
-      elevator.call(atFloor = 2, DOWN)
+      elevator.call(atFloor = 2, UP)
       elevator.nextCommand() must be equalTo("DOWN")
       elevator.nextCommand() must be equalTo("DOWN")
       elevator.nextCommand() must be equalTo("DOWN")
       elevator.nextCommand() must be equalTo("OPEN")
       elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.go(4)
       elevator.nextCommand() must be equalTo("UP")
     }
 
     "deserves a go and and has to search for calls in higher floors" in {
       elevator.resetToFloor(5)
       elevator.direction = UP
-      elevator.addGo(fromFloor = 5, toFloor = 3)
-      strategy.addCall(fromFloor = 5, atFloor = 6, UP)
+      elevator.callAndGo(atFloor = 5, toFloor = 3, DOWN)
+      elevator.call(atFloor = 6, UP)
       elevator.nextCommand() must be equalTo("DOWN")
       elevator.nextCommand() must be equalTo("DOWN")
       elevator.nextCommand() must be equalTo("OPEN")
+      elevator.users.travelers.size must be equalTo(0)
       elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.go(7)
       elevator.nextCommand() must be equalTo("UP")
     }
 
     "deserves a go and and has to search for calls in lower floors" in {
       elevator.resetToFloor(15)
       elevator.direction = UP
-      strategy.reset
-      strategy.addGo(fromFloor = 15, toFloor = 17)
-      strategy.addCall(fromFloor = 15, atFloor = 6, UP)
+      elevator.reset
+      elevator.callAndGo(atFloor = 15, toFloor = 17)
+      elevator.call(atFloor = 6, UP)
       elevator.nextCommand() must be equalTo("UP")
       elevator.nextCommand() must be equalTo("UP")
       elevator.floor must be equalTo(17)
@@ -167,20 +171,23 @@ object ElevatorSpec extends Specification {
       elevator.nextCommand() must be equalTo("DOWN")
     }
 
-    "not keep two calls in different direction to the same floor in the system" in {
+    "not keep two calls in different direction to the same floor outside" in {
       elevator.resetToFloor(10)
-      strategy.addCall(fromFloor = 10, atFloor = 10, UP)
-      strategy.addCall(fromFloor = 10, atFloor = 10, DOWN)
+      elevator.call(atFloor = 10, UP)
+      elevator.call(atFloor = 10, DOWN)
 
       elevator.nextCommand() must be equalTo("OPEN")
-      strategy.calls.size must be equalTo(0)
+      elevator.go(12)
+      elevator.go(0)
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.users.waiters.isEmpty must beTrue
     }
 
     "deserves two consecutive gos" in {
       elevator.resetToFloor(15)
       elevator.direction = UP
-      strategy.addGo(fromFloor = 15, toFloor = 17)
-      strategy.addGo(fromFloor = 15, toFloor = 18)
+      elevator.callAndGo(atFloor = 15, toFloor = 17)
+      elevator.callAndGo(atFloor = 15, toFloor = 18)
       elevator.nextCommand() must be equalTo("UP")
       elevator.nextCommand() must be equalTo("UP")
       elevator.floor must be equalTo(17)
@@ -195,17 +202,20 @@ object ElevatorSpec extends Specification {
 
     "does not need to stop if no go call or" in {
       elevator.resetToFloor(1)
-      strategy.needsStop(elevator) must beFalse
+      elevator.canStop() must beFalse
     }
 
     "force direction to middle when no another call or go in current direction" in {
       elevator.resetToFloor(5)
-      strategy.addCall(fromFloor = 5, atFloor = 4, UP)
+      elevator.call(atFloor = 4, UP)
 
       elevator.nextCommand() must be equalTo("DOWN")
       elevator.nextCommand() must be equalTo("OPEN")
+      elevator.go(5)
       elevator.nextCommand() must be equalTo("CLOSE")
       elevator.nextCommand() must be equalTo("UP")
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.nextCommand() must be equalTo("CLOSE")
       elevator.nextCommand() must be equalTo("UP")
       elevator.nextCommand() must be equalTo("UP")
       elevator.nextCommand() must be equalTo("UP")
@@ -219,13 +229,13 @@ object ElevatorSpec extends Specification {
       elevator.resetToFloor(1)
       elevator.direction = UP
 
-      strategy.addGo(fromFloor = 1, toFloor = 3)
+      elevator.callAndGo(atFloor = 1, toFloor = 3)
       elevator.nextCommand() must be equalTo("UP")
       elevator.floor must be equalTo(2)
       elevator.nextCommand() must be equalTo("UP")
       elevator.floor must be equalTo(3)
       elevator.nextCommand() must be equalTo("OPEN")
-      strategy.gos.size must be equalTo(0)
+      elevator.users.travelers.size must be equalTo(0)
       elevator.nextCommand() must be equalTo("CLOSE")
       elevator.nextCommand() must be equalTo("UP")
     }
@@ -234,14 +244,13 @@ object ElevatorSpec extends Specification {
       elevator.resetToFloor(1)
       elevator.direction = UP
 
-      strategy.addCall(fromFloor = 1, atFloor = 3, UP)
+      elevator.call(atFloor = 3, UP)
       elevator.nextCommand() must be equalTo("UP")
-      elevator.floor must be equalTo(2)
       elevator.nextCommand() must be equalTo("UP")
-      elevator.floor must be equalTo(3)
       elevator.nextCommand() must be equalTo("OPEN")
-      strategy.calls.size must be equalTo(0)
+      elevator.go(6)
       elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.users.waiters.size must be equalTo(0)
       elevator.nextCommand() must be equalTo("UP")
     }
 
@@ -249,64 +258,60 @@ object ElevatorSpec extends Specification {
       elevator.resetToFloor(1)
       elevator.direction = UP
 
-      strategy.addCall(fromFloor = 1, atFloor = 3, DOWN)
+      elevator.call(atFloor = 3, DOWN)
       elevator.nextCommand() must be equalTo("UP")
-      elevator.floor must be equalTo(2)
       elevator.nextCommand() must be equalTo("UP")
-      elevator.floor must be equalTo(3)
       elevator.nextCommand() must be equalTo("OPEN")
-      strategy.calls.size must be equalTo(0)
+      elevator.go(1)
       elevator.nextCommand() must be equalTo("CLOSE")
-      elevator.nextCommand() must be equalTo("UP")
+      elevator.users.waiters.size must be equalTo(0)
+      elevator.nextCommand() must be equalTo("DOWN")
     }
 
     "stops with only one call at a floor in the opposite direction and then a go" in {
-      elevator.resetToFloor(1)
-      elevator.direction = UP
+      elevator.resetToFloor(10)
+      elevator.direction = DOWN
 
-      strategy.addCall(fromFloor = 1, atFloor = 3, DOWN)
-      elevator.nextCommand() must be equalTo("UP")
-      elevator.floor must be equalTo(2)
-      elevator.nextCommand() must be equalTo("UP")
-      elevator.floor must be equalTo(3)
-      elevator.nextCommand() must be equalTo("OPEN")
-      strategy.calls.size must be equalTo(0)
-      elevator.nextCommand() must be equalTo("CLOSE")
-      strategy.addGo(elevator.floor, 2)
+      elevator.call(atFloor = 8, UP)
+      elevator.nextCommand() must be equalTo("DOWN")
       elevator.nextCommand() must be equalTo("DOWN")
       elevator.nextCommand() must be equalTo("OPEN")
+      elevator.go(11)
       elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.users.waiters.size must be equalTo(0)
       elevator.nextCommand() must be equalTo("UP")
+      elevator.nextCommand() must be equalTo("UP")
+      elevator.nextCommand() must be equalTo("UP")
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.nextCommand() must be equalTo("DOWN")
     }
 
     "handle a go and a call in the same direction" in {
       elevator.resetToFloor(1)
       elevator.direction = UP
 
-      strategy.addGo(fromFloor = 1, toFloor = 5)
-      strategy.addCall(fromFloor = 1, atFloor = 3, UP)
+      elevator.callAndGo(atFloor = 1, toFloor = 5)
+      elevator.call(atFloor = 3, UP)
 
       elevator.nextCommand() must be equalTo("UP")
-      elevator.floor must be equalTo(2)
       elevator.nextCommand() must be equalTo("UP")
-      elevator.floor must be equalTo(3)
       elevator.nextCommand() must be equalTo("OPEN")
-      strategy.calls.size must be equalTo(0)
+      elevator.go(5)
       elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.users.waiters.size must be equalTo(0)
       elevator.nextCommand() must be equalTo("UP")
-      elevator.floor must be equalTo(4)
       elevator.nextCommand() must be equalTo("UP")
-      elevator.floor must be equalTo(5)
       elevator.nextCommand() must be equalTo("OPEN")
-      strategy.gos.size must be equalTo(0)
+      elevator.users.travelers.size must be equalTo(0)
     }
 
     "handle a go and a call in the opposite direction" in {
       elevator.resetToFloor(1)
       elevator.direction = UP
 
-      strategy.addGo(fromFloor = 1, toFloor = 5)
-      strategy.addCall(fromFloor = 1, atFloor = 3, DOWN)
+      elevator.callAndGo(atFloor = 1, toFloor = 5)
+      elevator.call(atFloor = 3, DOWN)
 
       elevator.nextCommand() must be equalTo("UP")
       elevator.floor must be equalTo(2)
@@ -317,38 +322,36 @@ object ElevatorSpec extends Specification {
       elevator.nextCommand() must be equalTo("UP")
       elevator.floor must be equalTo(5)
       elevator.nextCommand() must be equalTo("OPEN")
-      strategy.gos.size must be equalTo(0)
+      elevator.users.travelers.size must be equalTo(0)
     }
 
     "not fucking fool me" in {
       elevator.resetToFloor(5)
       elevator.direction = DOWN
 
-      strategy.addCall(fromFloor = 5, atFloor = 2, UP)
-      strategy.addCall(fromFloor = 5, atFloor = 7, DOWN)
+      elevator.call(atFloor = 2, UP)
+      elevator.call(atFloor = 7, DOWN)
 
       elevator.nextCommand() must be equalTo("UP")
-      elevator.floor must beEqualTo(6)
       elevator.nextCommand() must be equalTo("UP")
-      elevator.floor must beEqualTo(7)
       elevator.nextCommand() must be equalTo("OPEN")
+      elevator.go(2)
       elevator.nextCommand() must be equalTo("CLOSE")
       elevator.nextCommand() must be equalTo("DOWN")
-      elevator.floor must beEqualTo(6)
       elevator.nextCommand() must be equalTo("DOWN")
-      elevator.floor must beEqualTo(5)
       elevator.nextCommand() must be equalTo("DOWN")
-      elevator.floor must beEqualTo(4)
       elevator.nextCommand() must be equalTo("DOWN")
-      elevator.floor must beEqualTo(3)
       elevator.nextCommand() must be equalTo("DOWN")
-      elevator.floor must beEqualTo(2)
       elevator.nextCommand() must be equalTo("OPEN")
+      elevator.go(5)
       elevator.nextCommand() must be equalTo("CLOSE")
       elevator.nextCommand() must be equalTo("UP")
     }
 
   }
+
+
+
 
 
 }

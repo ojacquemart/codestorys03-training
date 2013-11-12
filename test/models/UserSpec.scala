@@ -16,6 +16,9 @@ object UserSpec extends Specification {
 
   "User" should {
 
+    /**
+     * <li>fromFloor = 0, toFloor = 5, direction = UP
+     */
     def newUser = User(fromFloor = 0, toFloor = 5, direction = UP)
 
     "change state" in {
@@ -85,16 +88,16 @@ object UserSpec extends Specification {
 
     "get direction by a current floor" in {
       val user = newUser // toFloor is 5
-      user.directionByFloor(0) must be equalTo(UP)
-      user.directionByFloor(6) must be equalTo(DOWN)
+      user.directionFromToFloorByFloor(0) must be equalTo(UP)
+      user.directionFromToFloorByFloor(6) must be equalTo(DOWN)
     }
 
-    "check if needs to up" in {
-      val user = newUser
-      user.needsToGoUp(5, 7) must beTrue
-      user.needsToGoUp(5, 6) must beTrue
-      user.needsToGoUp(5, 5) must beFalse
-      user.needsToGoUp(5, 4) must beFalse
+    "check if needs to up when waiting" in {
+      val user = new User(fromFloor = 5, toFloor = 7, UP)
+      user.needsToGoUpFromFloorToFloor(7) must beFalse
+      user.needsToGoUpFromFloorToFloor(6) must beFalse
+      user.needsToGoUpFromFloorToFloor(5) must beFalse
+      user.needsToGoUpFromFloorToFloor(4) must beTrue
     }
 
     "tick" in {

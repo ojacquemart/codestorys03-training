@@ -25,6 +25,12 @@ trait Elevator extends Reset {
 
   def isAtMiddle: Boolean = floor == middleFloor
 
+  // visible for test
+  def callAndGo(atFloor: Int, toFloor: Int, direction: Direction = UP) = {
+    call(atFloor, direction)
+    go(toFloor)
+  }
+
   def call(atFloor: Int, direction: Direction) {
     users.add(atFloor, direction)
   }
@@ -36,6 +42,7 @@ trait Elevator extends Reset {
   }
   def onUserExited {}
 
+  def canDoNothing() = isAtMiddle && isEmpty()
   def canStop(): Boolean
   def getDirectionTypeForTravelers(): NextDirectionType.Value
   def getDirectionTypeForWaiters(): NextDirectionType.Value
@@ -60,9 +67,11 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends Elevator {
   def nextCommand() = {
     nextFloorsToGo = users.updateNextFloorsToGo(floor, nextFloorsToGo)
     users.tick()
+
+    val command = strategy.nextCommand(this)
     users.removeDone()
 
-    strategy.nextCommand(this)
+    command
   }
 
   def canStop() = {
@@ -108,11 +117,7 @@ case class SimpleElevator(maxFloor: Int, strategy: Strategy) extends Elevator {
 }
 
 trait Strategy {
-
   def nextCommand(elevator: Elevator): String
-
-  def canDoNothing(elevator: Elevator) = elevator.isAtMiddle && elevator.isEmpty()
-
 }
 
 class DirectionStrategy extends Strategy {
@@ -130,7 +135,7 @@ class DirectionStrategy extends Strategy {
 
       fromDirection(direction).to(elevator)
     }
-    else if (canDoNothing(elevator)) {
+    else if (elevator.canDoNothing()) {
       Logger.debug("Can do nothing because no stops & at the middle floor!")
       NothingCommand.to(elevator)
     }
