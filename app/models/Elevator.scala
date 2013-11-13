@@ -22,9 +22,9 @@ trait Elevator extends Reset {
   var nextFloorsToGo = MutableList[Int]()
 
   def needsToInverseDirection(): Boolean = (direction == UP && isAtTop) || (direction == DOWN && isAtBottom)
+
   def isAtTop: Boolean = floor == higherFloor
   def isAtBottom: Boolean = floor == 0
-
   def isAtMiddle: Boolean = floor == middleFloor
 
   // visible for test

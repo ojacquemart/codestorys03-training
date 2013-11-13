@@ -355,17 +355,121 @@ object ElevatorSpec extends Specification {
       elevator.nextCommand() must be equalTo("UP")
     }
 
-    "not take waiters if cabin is full" in {
+    /**
+     * Travelers
+     */
+    def resetToFloor5WithCabinSizeAt10 ()= {
       val cabinSize = 10
       elevator.resetToFloor(5, MaxFloor, cabinSize)
+    }
 
-      for (i <- 1 to cabinSize) elevator.callAndGo(5, 10, UP)
+    "not take waiters if cabin is full with one waiter going in the same direction" in {
+      resetToFloor5WithCabinSizeAt10()
+
+      // 10 waiters going to 8 will enter on next command
+      for (i <- 0 until 10) elevator.callAndGo(5, 8, UP)
       elevator.call(6, UP)
 
       elevator.nextCommand() must be equalTo("UP")
-      elevator.users.travelersSize must be equalTo(cabinSize)
+      elevator.users.travelersSize must be equalTo(10)
+      elevator.users.waitersSize must be equalTo(1)
       elevator.nextCommand() must be equalTo("UP")
       elevator.nextCommand() must be equalTo("UP")
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.users.travelersSize must be equalTo(0)
+      elevator.nextCommand() must be equalTo("DOWN")
+      elevator.nextCommand() must be equalTo("DOWN")
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.go(10)
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.nextCommand() must be equalTo("UP")
+    }
+
+    "not take waiters if cabin is full with one waiter going in the opposite direction" in {
+      resetToFloor5WithCabinSizeAt10()
+
+      // 10 waiters going to 8 will enter on next command
+      for (i <- 0 until 10) elevator.callAndGo(5, 8, UP)
+      elevator.call(6, DOWN)
+
+      elevator.nextCommand() must be equalTo("UP")
+      elevator.nextCommand() must be equalTo("UP")
+      elevator.nextCommand() must be equalTo("UP")
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.nextCommand() must be equalTo("DOWN")
+      elevator.nextCommand() must be equalTo("DOWN")
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.go(7)
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.nextCommand() must be equalTo("UP")
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.nextCommand() must be equalTo("CLOSE")
+    }
+
+    "let some travelers leave and waiters enter when playing with max cabin size" in {
+      resetToFloor5WithCabinSizeAt10()
+
+      // setup travelers at 6 to 10 and at 0 to 4
+      for (i <- 0 until 5) elevator.callAndGo(5, 5 + (i+1), UP)
+      for (i <- 0 until 5) elevator.callAndGo(5, 5 - (i+1), DOWN)
+      // 4 people waiting at 6, will have to wait...
+      elevator.call(6, UP)
+      elevator.call(6, DOWN)
+
+      elevator.nextCommand() must be equalTo("UP") // go to 6
+      elevator.users.travelersSize must be equalTo(10)
+      elevator.nextCommand() must be equalTo("OPEN") // one traveler leaves
+      elevator.go(7) // one new enters
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.users.travelersSize must be equalTo(10)
+      elevator.nextCommand() must be equalTo("UP") // go to 7
+      elevator.users.travelersSize must be equalTo(10)
+
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.users.travelersSize must be equalTo(8) // two travelers left
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.nextCommand() must be equalTo("UP") // go to 8
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.users.travelersSize must be equalTo(7)
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.nextCommand() must be equalTo("UP") // go to 9
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.users.travelersSize must be equalTo(6)
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.nextCommand() must be equalTo("UP") // go to 10
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.users.travelersSize must be equalTo(5)
+      elevator.nextCommand() must be equalTo("CLOSE")
+
+      elevator.nextCommand() must be equalTo("DOWN") // floor 9
+      elevator.nextCommand() must be equalTo("DOWN")
+      elevator.nextCommand() must be equalTo("DOWN")
+      elevator.nextCommand() must be equalTo("DOWN") // floor 6
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.go(0)
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.nextCommand() must be equalTo("DOWN") // floor 5
+      elevator.nextCommand() must be equalTo("DOWN") // floor 4
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.nextCommand() must be equalTo("DOWN") // floor 3
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.nextCommand() must be equalTo("DOWN") // floor 2
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.nextCommand() must be equalTo("DOWN") // floor 1
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.nextCommand() must be equalTo("DOWN") // floor 0
+      elevator.nextCommand() must be equalTo("OPEN")
+      elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.isEmpty must beTrue
+      elevator.nextCommand() must be equalTo("UP") // go to middle
+
+
     }
 
   }

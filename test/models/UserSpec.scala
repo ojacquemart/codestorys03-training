@@ -227,8 +227,8 @@ object UserSpec extends Specification {
     "stop when has travelers or waiters in a direction at a floor" in {
       val users = usersWithTravelersAndWaiters
       users.canStopAt(0, UP) must beTrue // traveler
-      users.canStopAt(2, UP) must beTrue // traver
-      users.canStopAt(5, UP) must beTrue // traver
+      users.canStopAt(2, UP) must beTrue // traveler
+      users.canStopAt(5, UP) must beTrue // traveler
       users.canStopAt(3, UP) must beTrue // waiter in same direction
       users.canStopAt(4, UP) must beFalse // waiter in inverse direction
       users.canStopAt(15, DOWN) must beTrue // waiter is in same direction
@@ -279,21 +279,23 @@ object UserSpec extends Specification {
       users.users.forall(u => users.canStopAt(u.toFloor, UP) must beTrue)
     }
 
-    def usersWithOnlyTravelersAtFloor10AndCabinSizeTo10 = {
-      val users = new Users()
-      users.maxTravelers = 10
-      for (i <- 1 to users.maxTravelers) users.add(10, i, DOWN, TRAVELING)
+    def  usersWithOnlyTravelersAtFloor10AndMaxTravelersTo10 = {
+      val users = new Users(9)
+      for (i <- 0 to users.maxTravelers) users.add(floor = 10, toFloor = i, DOWN, TRAVELING)
 
       users
     }
 
-    "don't stop max travelers is reached" in {
-      val users = usersWithOnlyTravelersAtFloor10AndCabinSizeTo10
+    "don't stop when max travelers is reached" in {
+      val users = usersWithOnlyTravelersAtFloor10AndMaxTravelersTo10
       users.travelersSize must be equalTo(10)
-      users.hasMaxTravelers must beTrue
+      users.remainsPlaceForNewTravelers() must beFalse
 
-      users.add(10, UP)
-      users.canStopAt(10, UP) must be equalTo(false)
+      users.add(11, UP) // waiter at 11
+      users.canStopAt(12, UP) must beFalse // waiter can't enter, cabin is full!
+      users.canStopAt(9, UP) must beTrue // traveler at 9
+      users.canStopAt(0, UP) must beTrue // traveler at 0
+      users.canStopAt(19, UP) must beFalse // no one at 19
     }
 
     "remove done users" in {

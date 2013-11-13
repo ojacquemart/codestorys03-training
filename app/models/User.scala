@@ -5,10 +5,9 @@ import scala.collection.mutable.MutableList
 
 import play.api.Logger
 
-class Users extends Reset {
+class Users(var maxTravelers: Int = 30) extends Reset {
   
   var users = emptyMutableUsers
-  var maxTravelers = 0
 
   def emptyMutableUsers = MutableList[User]()
 
@@ -48,6 +47,7 @@ class Users extends Reset {
   def travelers = users.filter(_.isTraveling())
 
   def waiters = users.filter(_.isWaiting())
+  def waitersSize = users.count(_.isWaiting())
 
   def doners = users.filter(_.isDone())
   def donerScores: Int = doners.map(_.score()).sum
@@ -78,43 +78,52 @@ class Users extends Reset {
       val waitersAt = hasWaitersAt(floor)
       Logger.debug(s"No travelers, waiters are at $floor: $waitersAt")
       waitersAt
-    } else if (hasMaxTravelers()) {
-      Logger.debug("Max travelers, can't stop")
-      false
-    } else {
-      val canStopForTravelerOrWaiterAt = canStopAtForTravelerOrWaiterAt(floor, to)
-      if (canStopForTravelerOrWaiterAt) return true
-
+    } else if (canStopForTravelersOrWaitersAt(floor, to)) true
+    else {
       val canStopForLoserAt = hasTravelersAtAndLosing(floor)
       Logger.debug(s"Only losers traveling are at $floor to $to: $canStopForLoserAt")
       canStopForLoserAt
     }
   }
 
-  def canStopAtForTravelerOrWaiterAt(floor: Int, to: Direction) = {
-    Logger.debug(s"\tTravelers ${users.filter(_.state == UserState.TRAVELING)}")
-    val travelersAtScoring = hasTravelersAtAndScoring(floor)
-
-    val waitersAtInDirection = hasWaitersAtInDirection(floor, to)
-    Logger.debug(s"Travelers are scoring at $floor: $travelersAtScoring")
-    Logger.debug(s"Waiters are at $floor in direction $to: $waitersAtInDirection")
-    val canStop = travelersAtScoring || waitersAtInDirection
+  def canStopForTravelersOrWaitersAt(floor: Int, to: Direction) = {
+    val canStop = hasTravelersAt(floor) || canStopForWaitersAt(floor, to)
     Logger.debug(s"\tCan stop for traveler or waiter at $floor in direction $to: $canStop")
 
     canStop
   }
+
+  def canStopForWaitersAt(floor: Int, to: Direction) = {
+    val canStopForWaiters = hasWaitersAtInDirection(floor, to) && remainsPlaceForNewTravelers()
+    Logger.debug(s"Can stop for waiters at $floor to $to: $canStopForWaiters")
+
+    canStopForWaiters
+  }
   
-  def hasMaxTravelers() = travelersSize == maxTravelers
+  def remainsPlaceForNewTravelers(): Boolean = {
+    val remainsPlace = travelersSize < maxTravelers
+    Logger.debug(s"Remains place for new travelers: $remainsPlace")
+
+    remainsPlace
+  }
 
   def hasNoTravelers() = users.count(_.isTraveling()) == 0
   def hasWaitersAt(floor: Int) = users.count(_.isWaitingAt(floor)) > 0
 
-  def hasTravelersAtAndScoring(floor: Int): Boolean =
-    // TODO: use isTravelingAtAndScoring to improve score when a large number of users.
-    users.count(_.isTravelingAt(floor)) > 0
+  // TODO: use isTravelingAtAndScoring to improve score when a large number of users.
+  def hasTravelersAt(floor: Int): Boolean = {
+    val nbTravelersAt = users.count(_.isTravelingAt(floor))
+    Logger.debug(s"$nbTravelersAt travelers at $floor")
 
-  def hasWaitersAtInDirection(floor: Int, to: Direction) =
-    users.count(_.isWaitingAtInDirection(floor, to)) > 0
+    nbTravelersAt > 0
+  }
+
+  def hasWaitersAtInDirection(floor: Int, to: Direction): Boolean = {
+    val nbWaitersAtInDirection = users.count(_.isWaitingAtInDirection(floor, to))
+    Logger.debug(s"Has waiters at $floor to $to: $nbWaitersAtInDirection")
+
+    nbWaitersAtInDirection > 0
+  }
 
   def hasTravelersAtAndLosing(floor: Int) = users.count(_.isTravelingAtAndLosing(floor)) > 0
 
