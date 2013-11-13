@@ -4,7 +4,7 @@ import org.specs2.mutable.Specification
 
 object ElevatorSpec extends Specification {
 
-  val MaxFloor = 20
+  val MaxFloor = 19
   val MaxCabinSize = 100
   val elevator = new SimpleElevator(MaxFloor, MaxCabinSize, new OpenCloseStrategy())
 
@@ -32,9 +32,9 @@ object ElevatorSpec extends Specification {
 
     "reset lower floor, higherFloor and cabinSize changing default values" in {
       elevator.floor = 2
-      elevator.resetToFloor(10, 20, 15)
+      elevator.resetToFloor(10, MaxFloor, 15)
       elevator.floor must be equalTo(10)
-      elevator.higherFloor must be equalTo(20)
+      elevator.higherFloor must be equalTo(19)
       elevator.cabinSize must be equalTo(15)
     }
 
@@ -47,11 +47,12 @@ object ElevatorSpec extends Specification {
 
     "check if is at top floor" in {
       elevator.isAtTop must beFalse
-      elevator.floor = MaxFloor - 1
+      elevator.floor = MaxFloor
       elevator.isAtTop must beTrue
     }
 
     "check if is at the middle floor" in {
+      elevator.resetToFloor(0, MaxFloor, 10)
       elevator.isAtMiddle must beFalse
       elevator.floor = 10
       elevator.isAtMiddle must beTrue
@@ -61,7 +62,7 @@ object ElevatorSpec extends Specification {
       elevator.floor = 1
       elevator.direction = UP
       elevator.needsToInverseDirection() must beFalse
-      elevator.floor = MaxFloor - 1
+      elevator.floor = MaxFloor
       elevator.needsToInverseDirection() must beTrue
       elevator.direction = DOWN
       elevator.floor = 0
@@ -74,7 +75,7 @@ object ElevatorSpec extends Specification {
     }
 
     "respect the cabin size" in {
-      elevator.resetToFloor(10, 20, 10)
+      elevator.resetToFloor(10, MaxFloor, 10)
       elevator.canBringOneMoreTraveler(9) must beTrue
       elevator.canBringOneMoreTraveler(10) must beFalse
       elevator.canBringOneMoreTraveler(11) must beFalse
@@ -233,6 +234,9 @@ object ElevatorSpec extends Specification {
       elevator.nextCommand() must be equalTo("UP")
       elevator.nextCommand() must be equalTo("UP")
       elevator.nextCommand() must be equalTo("UP")
+      elevator.floor must be equalTo(elevator.middleFloor)
+      elevator.users.waiters.isEmpty must beTrue
+      elevator.users.travelers.isEmpty must beTrue
       elevator.nextCommand() must be equalTo("NOTHING")
 
     }

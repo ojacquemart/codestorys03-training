@@ -4,7 +4,7 @@ import org.specs2.mutable.Specification
 
 object CommandSpec extends Specification {
 
-  val MaxFloor = 20
+  val MaxFloor = 19
   val elevator = new SimpleElevator(MaxFloor, 10, new DirectionStrategy())
 
   "Nothing command" should {
@@ -16,7 +16,7 @@ object CommandSpec extends Specification {
   "Up command" should {
 
     "do nothing when elevator is at top floor" in {
-      elevator.floor = MaxFloor - 1
+      elevator.floor = MaxFloor
       UpCommand.to(elevator) must be equalTo("NOTHING")
     }
 
