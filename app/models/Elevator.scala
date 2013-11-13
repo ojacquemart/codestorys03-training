@@ -8,7 +8,7 @@ trait Elevator extends Reset {
 
   var lowerFloor = 0
   var higherFloor: Int
-  def middleFloor = higherFloor / 2
+  def middleFloor = (higherFloor / 2) + 1
   var cabinSize: Int
 
   var floor: Int = 0
@@ -25,7 +25,7 @@ trait Elevator extends Reset {
   def isAtTop: Boolean = floor == higherFloor
   def isAtBottom: Boolean = floor == 0
 
-  def isAtMiddle: Boolean = floor == middleFloor + 1
+  def isAtMiddle: Boolean = floor == middleFloor
 
   // visible for test
   def callAndGo(atFloor: Int, toFloor: Int, direction: Direction = UP) = {
@@ -108,7 +108,7 @@ case class SimpleElevator(var higherFloor: Int, var cabinSize: Int, strategy: St
   def getStatus: String = s"""
       points=$points, door=$door, direction=$direction
       -
-      floor=$floor, higherFloor=$higherFloor, lowerFloor=$lowerFloor
+      floor=$floor, higherFloor=$higherFloor, lowerFloor=$lowerFloor, atMiddleFloor=$isAtMiddle
       -
       totalUsers=${users.size}
       nbWaiters=${users.waiters.size}
