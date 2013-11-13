@@ -58,5 +58,9 @@ object Application extends Controller {
     Ok(nextCommand)
   }
 
+  def status = Action {
+    Ok(elevator.getStatus)
+  }
+
 
 }
