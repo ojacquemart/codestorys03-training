@@ -8,6 +8,7 @@ import play.api.Logger
 class Users extends Reset {
   
   var users = emptyMutableUsers
+  var maxTravelers = 0
 
   def emptyMutableUsers = MutableList[User]()
 
@@ -45,9 +46,10 @@ class Users extends Reset {
 
   def travelersSize = users.count(_.isTraveling())
   def travelers = users.filter(_.isTraveling())
-  def waiters = users.filter(_.isWaiting())
-  def doners = users.filter(_.isDone())
 
+  def waiters = users.filter(_.isWaiting())
+
+  def doners = users.filter(_.isDone())
   def donerScores: Int = doners.map(_.score()).sum
 
   // When user has entered
@@ -70,24 +72,29 @@ class Users extends Reset {
 
   // Check if can stop at floor and direction for user
   def canStopAt(floor: Int, to: Direction): Boolean = {
+    Logger.debug(s"Max cabin size = $maxTravelers")
+
     if (hasNoTravelers()) {
       val waitersAt = hasWaitersAt(floor)
       Logger.debug(s"No travelers, waiters are at $floor: $waitersAt")
       waitersAt
-    }
-    else {
+    } else if (hasMaxTravelers()) {
+      Logger.debug("Max travelers, can't stop")
+      false
+    } else {
       val canStopForTravelerOrWaiterAt = canStopAtForTravelerOrWaiterAt(floor, to)
       if (canStopForTravelerOrWaiterAt) return true
 
       val canStopForLoserAt = hasTravelersAtAndLosing(floor)
       Logger.debug(s"Only losers traveling are at $floor to $to: $canStopForLoserAt")
-      return canStopForLoserAt
+      canStopForLoserAt
     }
   }
 
   def canStopAtForTravelerOrWaiterAt(floor: Int, to: Direction) = {
-    Logger.debug(s"Travelers ${users.filter(_.state == UserState.TRAVELING)}")
+    Logger.debug(s"\tTravelers ${users.filter(_.state == UserState.TRAVELING)}")
     val travelersAtScoring = hasTravelersAtAndScoring(floor)
+
     val waitersAtInDirection = hasWaitersAtInDirection(floor, to)
     Logger.debug(s"Travelers are scoring at $floor: $travelersAtScoring")
     Logger.debug(s"Waiters are at $floor in direction $to: $waitersAtInDirection")
@@ -96,6 +103,8 @@ class Users extends Reset {
 
     canStop
   }
+  
+  def hasMaxTravelers() = travelersSize == maxTravelers
 
   def hasNoTravelers() = users.count(_.isTraveling()) == 0
   def hasWaitersAt(floor: Int) = users.count(_.isWaitingAt(floor)) > 0
@@ -142,6 +151,11 @@ class Users extends Reset {
 
       if (directionToWaiter) NextDirectionType.TO_UP else NextDirectionType.TO_DOWN
     }
+  }
+
+  def resetUsers(maxTravelers: Int) = {
+    this.maxTravelers = maxTravelers
+    reset
   }
 
   def reset {

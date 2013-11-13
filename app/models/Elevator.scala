@@ -45,7 +45,6 @@ trait Elevator extends Reset {
   def onUserExited {}
 
   def canDoNothing() = isAtMiddle && isEmpty()
-  def canBringOneMoreTraveler(travelersSize: Int): Boolean
   def canStop(): Boolean
   def getDirectionTypeForTravelers(): NextDirectionType.Value
   def getDirectionTypeForWaiters(): NextDirectionType.Value
@@ -65,7 +64,7 @@ trait Elevator extends Reset {
     points = 0
     direction = UP
     door = Door.CLOSE
-    users.reset
+    users.resetUsers(cabinSize)
   }
 }
 
@@ -87,14 +86,6 @@ case class SimpleElevator(var higherFloor: Int, var cabinSize: Int, strategy: St
       points += users.donerScores
     }
     canStop
-  }
-
-  def canBringOneMoreTraveler(travelersSize: Int) = {
-    val oneMoreTraveler = travelersSize + 1 <= cabinSize
-    if (!oneMoreTraveler) {
-      Logger.debug(s"One more traveler at $floor with $travelersSize travelers for a max size of $cabinSize: $oneMoreTraveler")
-    }
-    oneMoreTraveler
   }
 
   def getDirectionTypeForTravelers(): NextDirectionType.Value = {

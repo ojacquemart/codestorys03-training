@@ -74,15 +74,6 @@ object ElevatorSpec extends Specification {
       elevator.canDoNothing() must beTrue
     }
 
-    "respect the cabin size" in {
-      elevator.resetToFloor(10, MaxFloor, 10)
-      elevator.canBringOneMoreTraveler(9) must beTrue
-      elevator.canBringOneMoreTraveler(10) must beFalse
-      elevator.canBringOneMoreTraveler(11) must beFalse
-      elevator.canBringOneMoreTraveler(8) must beTrue
-      elevator.canBringOneMoreTraveler(7) must beTrue
-    }
-
   }
 
   "DirectionStrategy" should {
@@ -341,7 +332,7 @@ object ElevatorSpec extends Specification {
       elevator.users.travelers.size must be equalTo(0)
     }
 
-    "not fucking fool me" in {
+    "not fucking go UP and DOWN" in {
       elevator.resetToFloor(5, MaxFloor, MaxCabinSize)
       elevator.direction = DOWN
 
@@ -361,6 +352,19 @@ object ElevatorSpec extends Specification {
       elevator.nextCommand() must be equalTo("OPEN")
       elevator.go(5)
       elevator.nextCommand() must be equalTo("CLOSE")
+      elevator.nextCommand() must be equalTo("UP")
+    }
+
+    "not take waiters if cabin is full" in {
+      val cabinSize = 10
+      elevator.resetToFloor(5, MaxFloor, cabinSize)
+
+      for (i <- 1 to cabinSize) elevator.callAndGo(5, 10, UP)
+      elevator.call(6, UP)
+
+      elevator.nextCommand() must be equalTo("UP")
+      elevator.users.travelersSize must be equalTo(cabinSize)
+      elevator.nextCommand() must be equalTo("UP")
       elevator.nextCommand() must be equalTo("UP")
     }
 

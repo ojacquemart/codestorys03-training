@@ -163,6 +163,10 @@ object UserSpec extends Specification {
       users
     }
 
+    def newWaiterGoingUp(fromFloor: Int) = {
+      new User(fromFloor, direction = UP)
+    }
+
     "reset" in {
       val users = threeUsers
 
@@ -273,6 +277,23 @@ object UserSpec extends Specification {
 
       // All users does not give points
       users.users.forall(u => users.canStopAt(u.toFloor, UP) must beTrue)
+    }
+
+    def usersWithOnlyTravelersAtFloor10AndCabinSizeTo10 = {
+      val users = new Users()
+      users.maxTravelers = 10
+      for (i <- 1 to users.maxTravelers) users.add(10, i, DOWN, TRAVELING)
+
+      users
+    }
+
+    "don't stop max travelers is reached" in {
+      val users = usersWithOnlyTravelersAtFloor10AndCabinSizeTo10
+      users.travelersSize must be equalTo(10)
+      users.hasMaxTravelers must beTrue
+
+      users.add(10, UP)
+      users.canStopAt(10, UP) must be equalTo(false)
     }
 
     "remove done users" in {
