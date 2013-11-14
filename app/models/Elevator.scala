@@ -16,7 +16,7 @@ trait Elevator extends Reset {
   var door = Door.CLOSE
   var points = 0
 
-  val users = new Users
+  var users = new Users(cabinSize)
 
   // To store the next goTo and update theirs values to the users.
   var nextFloorsToGo = MutableList[Int]()
@@ -54,6 +54,18 @@ trait Elevator extends Reset {
 
   def isEmpty() = users.size == 0
 
+  def switchUsersBehavior() {
+    if (isCabinFullAt80Percents()) {
+      Logger.debug("@@@ SWITCH to crowded users")
+      users = new CrowdedUsers(cabinSize, users.users)
+      Logger.debug(s"@@@ AFTER switch users $users")
+    }
+    else
+      users = new Users(cabinSize, users.users)
+  }
+
+  def isCabinFullAt80Percents() = users.travelersSize > (3).toInt
+
   // for testing
   def resetToFloor(lowerFloor: Int = 0, higherFloor: Int = 19, maxCabinSize: Int = 30) {
     reset(0, higherFloor, maxCabinSize)
@@ -84,7 +96,9 @@ case class SimpleElevator(var higherFloor: Int, var cabinSize: Int, strategy: St
     users.tick(floor)
     users.removeDone()
 
-    strategy.nextCommand(this)
+    val cmd = strategy.nextCommand(this)
+    switchUsersBehavior()
+    cmd
   }
 
   def canStop() = {
