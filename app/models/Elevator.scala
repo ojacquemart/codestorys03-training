@@ -8,7 +8,7 @@ trait Elevator extends Reset {
 
   var lowerFloor = 0
   var higherFloor: Int
-  def middleFloor = (higherFloor / 2) + 1
+  def middleFloor = (higherFloor - lowerFloor / 2) + 1
   var cabinSize: Int
 
   var floor: Int = 0
@@ -111,7 +111,7 @@ case class SimpleElevator(var higherFloor: Int, var cabinSize: Int, strategy: St
       nbWaiters=${users.waiters.size}
       cabinSize=$cabinSize, nbTravelers=${users.travelersSize}
       -
-      waitersByFloor=${debugWaitersByFloor()}
+      waiters=${debugWaitersByFloor()}
       travelers=${debugTravelersByFloor()}
       """
 
@@ -119,7 +119,6 @@ case class SimpleElevator(var higherFloor: Int, var cabinSize: Int, strategy: St
     val byFloor: (User) => Int = u => u.fromFloor
     group(users.waiters, byFloor)
   }
-  def debugTravelers() = users.travelers.sortBy(_.toFloor).mkString(",")
   def debugTravelersByFloor() = {
     val toFloor: (User) => Int = u => u.toFloor
     group(users.travelers, toFloor)
@@ -132,8 +131,7 @@ case class SimpleElevator(var higherFloor: Int, var cabinSize: Int, strategy: St
       .sortBy(_._1)
       .map(w => s"${w._1} -> ${w._2}").mkString(", ")
   }
-  def debugWaiters() = users.waiters.sortBy(_.toFloor).mkString(",")
-  
+
 }
 
 trait Strategy {

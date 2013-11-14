@@ -46,10 +46,9 @@ object Application extends Controller {
   }
 
   def nextCommand = Action {
-    Logger.info(s"@@@ NEXT COMMAND, status beforeAction: ${elevator.getStatus}")
     val nextCommand = elevator.nextCommand()
     Logger.info(s"@@@ NEXT COMMAND: $nextCommand")
-    Logger.info(s"@@@ NEXT COMMAND, status afterAction: ${elevator.getStatus}")
+    Logger.info(s"@@@ NEXT COMMAND:  status afterAction: ${elevator.getStatus}")
 
     Ok(nextCommand)
   }
