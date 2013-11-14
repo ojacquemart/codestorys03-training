@@ -113,19 +113,19 @@ object UserSpec extends Specification {
     "tick" in {
       val user = newUser
       user.tick(0)
-      user.travelingTicks must be equalTo(0)
-      user.waitingTicks must be equalTo(1)
+      user.travelingTime must be equalTo(0)
+      user.waitingTime must be equalTo(1)
       user.tick(1)
-      user.travelingTicks must be equalTo(0)
-      user.waitingTicks must be equalTo(2)
+      user.travelingTime must be equalTo(0)
+      user.waitingTime must be equalTo(2)
 
       user.travel()
       user.tick(0)
-      user.travelingTicks must be equalTo(1)
-      user.waitingTicks must be equalTo(2)
+      user.travelingTime must be equalTo(1)
+      user.waitingTime must be equalTo(2)
       user.tick(1)
-      user.travelingTicks must be equalTo(2)
-      user.waitingTicks must be equalTo(2)
+      user.travelingTime must be equalTo(2)
+      user.waitingTime must be equalTo(2)
     }
 
     "score" in {

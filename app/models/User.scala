@@ -151,7 +151,7 @@ class Users(var maxTravelers: Int = 30) extends Reset {
     }
     else {
       val nearestWaiter = waiters
-        .sortBy(_.fromFloor)
+        .sortBy(w => w.fromFloor + w.waitingTime)
         .minBy(waiter => Math.abs(floor - waiter.fromFloor))
 
       Logger.debug(s"Lets go the first waiter: $nearestWaiter")
@@ -190,8 +190,8 @@ case class User(fromFloor: Int, var toFloor: Int = -1, direction: Direction = UP
   import ToFloorState._
 
   var state = WAITING
-  var waitingTicks = 0
-  var travelingTicks = 0
+  var waitingTime = 0
+  var travelingTime = 0
 
   var toFloorState = UNDEFINED
 
@@ -237,18 +237,17 @@ case class User(fromFloor: Int, var toFloor: Int = -1, direction: Direction = UP
   def tick(floor: Int) = {
     currentFloor = floor
     state match {
-      case WAITING => waitingTicks += 1
-      case TRAVELING => travelingTicks += 1
+      case WAITING => waitingTime += 1
+      case TRAVELING => travelingTime += 1
       case _ =>
     }
   }
 
   def score() = {
-    val waitingTime = waitingTicks / 2
+    val waitingTimeBy2 = waitingTime / 2
     val distance = abs(fromFloor - toFloor)
-    val travelingTime = travelingTicks
 
-    val points = 20 + 2 + distance - waitingTime - travelingTime
+    val points = 20 + 2 + distance - waitingTimeBy2 - travelingTime
     min(max(0, points), 20)
   }
 
