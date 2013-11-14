@@ -9,10 +9,6 @@ object Application extends Controller {
 
   val elevator = new SimpleElevator(19, 30, new OpenCloseStrategy())
 
-  def ping = Action {
-    Ok
-  }
-
   def reset(lowerFloor: Int, higherFloor: Int, cabinSize: Int, cause: String) = Action {
     Logger.info(s"""@@@ RESET
            Reset lower=$lowerFloor, higher=$higherFloor, cabinSize=$cabinSize, cause='$cause'""")
