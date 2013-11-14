@@ -6,9 +6,9 @@ import scala.collection.mutable.MutableList
 
 trait Elevator extends Reset {
 
-  var lowerFloor = 0
+  var lowerFloor: Int = 0
   var higherFloor: Int
-  def middleFloor = (higherFloor - lowerFloor / 2) + 1
+  def middleFloor = (higherFloor - lowerFloor) / 2 + 1
   var cabinSize: Int
 
   var floor: Int = 0
@@ -26,6 +26,9 @@ trait Elevator extends Reset {
   def isAtTop: Boolean = floor == higherFloor
   def isAtBottom: Boolean = floor == 0
   def isAtMiddle: Boolean = floor == middleFloor
+
+  def isDoorOpened = door == Door.OPEN
+  def isDoorClosed = door == Door.CLOSE
 
   // visible for test
   def callAndGo(atFloor: Int, toFloor: Int, direction: Direction = UP) = {
@@ -53,7 +56,7 @@ trait Elevator extends Reset {
 
   // for testing
   def resetToFloor(lowerFloor: Int = 0, higherFloor: Int = 19, maxCabinSize: Int = 30) {
-    reset(lowerFloor, higherFloor, maxCabinSize)
+    reset(0, higherFloor, maxCabinSize)
     floor = lowerFloor
   }
 
@@ -198,8 +201,8 @@ class DirectionStrategy extends Strategy {
 class OpenCloseStrategy extends DirectionStrategy {
 
   override def nextCommand(elevator: Elevator): String = {
-    if (elevator.canStop() && elevator.door == Door.CLOSE) OpenCommand.to(elevator)
-    else if (elevator.door == Door.OPEN) CloseCommand.to(elevator)
+    if (elevator.canStop() && elevator.isDoorClosed) OpenCommand.to(elevator)
+    else if (elevator.isDoorOpened) CloseCommand.to(elevator)
     else super.nextCommand(elevator)
   }
 }

@@ -49,9 +49,5 @@ class ApplicationSpec extends Specification {
     "send 200 on userHasExited" in new WithApplication {
       assert200("/userHasExited")
     }
-
-    "send 200 on ping" in new WithApplication {
-      assert200("/ping")
-    }
   }
 }
