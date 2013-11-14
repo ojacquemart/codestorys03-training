@@ -37,8 +37,8 @@ trait Elevator extends Reset {
   }
 
   def call(atFloor: Int, direction: Direction) {
-      users.add(atFloor, direction)
-    }
+    users.add(atFloor, direction)
+  }
 
   def userHasEntered {}
 
@@ -64,7 +64,7 @@ trait Elevator extends Reset {
       users = new Users(cabinSize, users.users)
   }
 
-  def isCabinFullAt80Percents() = users.travelersSize > (3).toInt
+  def isCabinFullAt80Percents() = users.travelersSize > (cabinSize * 0.8).toInt
 
   // for testing
   def resetToFloor(lowerFloor: Int = 0, higherFloor: Int = 19, maxCabinSize: Int = 30) {
@@ -140,7 +140,7 @@ case class SimpleElevator(var higherFloor: Int, var cabinSize: Int, strategy: St
     val toFloor: (User) => Int = u => u.toFloor
     group(users.travelers, toFloor)
   }
-  
+
   def group(list: MutableList[User], f: (User) => Int) = {
     list.groupBy(f)
       .map(u => (u._1, u._2.size))

@@ -19,6 +19,34 @@ class CrowdedUsers(maxTravelers: Int, users: MutableList[User]) extends Users(ma
     false
   }
 
+  override def getDirectionTypeForWaiters(floor: Int, to: Direction) = {
+    val waiters = users.filter(_.isWaiting())
+    if (waiters.size == 0) {
+      Logger.debug("No waiters, force direction to middle floor")
+      NextDirectionType.TO_MIDDLE_FLOOR
+    }
+    else {
+      val nearestFloorWithLotOfFewWaiters = findFloorWithNearestWaiter(floor)
+
+      Logger.debug(s"Lets go the first waiter at $nearestFloorWithLotOfFewWaiters")
+
+      val directionToWaiter = needsToGoUpFromFloorToFloor(floor, nearestFloorWithLotOfFewWaiters)
+      Logger.debug(s"\tNeeds to go up $directionToWaiter from $floor to ${nearestFloorWithLotOfFewWaiters}")
+
+      if (directionToWaiter) NextDirectionType.TO_UP else NextDirectionType.TO_DOWN
+    }
+  }
+
+  def needsToGoUpFromFloorToFloor(floor1: Int, floor2: Int) = floor1 < floor2
+
+  def findFloorWithNearestWaiter(floor: Int): Int = {
+    waiters
+      .sortBy(w => w.fromFloor + w.waitingTime)
+      .groupBy(_.fromFloor)
+      .toList
+      .sortBy(_._2.size)
+      .head._1
+  }
 
 
 }
