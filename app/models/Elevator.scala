@@ -8,7 +8,7 @@ trait Elevator extends Reset {
 
   var lowerFloor: Int = 0
   var higherFloor: Int
-  def middleFloor = (higherFloor - lowerFloor) / 2 + 1
+  def middleFloor = (higherFloor + lowerFloor) / 2 + 1
   var cabinSize: Int
 
   var floor: Int = 0
