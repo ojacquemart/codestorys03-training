@@ -51,8 +51,14 @@ trait Elevator extends Reset {
 
   def isEmpty() = users.size == 0
 
+  // for testing
   def resetToFloor(lowerFloor: Int = 0, higherFloor: Int = 19, maxCabinSize: Int = 30) {
+    reset(lowerFloor, higherFloor, maxCabinSize)
     floor = lowerFloor
+  }
+
+  def reset(lowerFloor: Int = 0, higherFloor: Int = 19, maxCabinSize: Int = 30) {
+    floor = 0
     this.lowerFloor = lowerFloor
     this.higherFloor = higherFloor
     this.cabinSize = maxCabinSize
