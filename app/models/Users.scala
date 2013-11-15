@@ -4,7 +4,9 @@ import scala.collection.mutable.MutableList
 
 import play.api.Logger
 
-class Users(var maxTravelers: Int, var users: MutableList[User] = MutableList()) extends Reset {
+class Users(var maxTravelers: Int = 30) extends Reset {
+
+  var users: MutableList[User] = emptyMutableUsers
 
   def emptyMutableUsers = MutableList[User]()
 

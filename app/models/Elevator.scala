@@ -54,16 +54,6 @@ trait Elevator extends Reset {
 
   def isEmpty() = users.size == 0
 
-  def switchUsersBehavior() {
-    if (isCabinFullAt80Percents()) {
-      Logger.debug("@@@ SWITCH to crowded users")
-      users = new CrowdedUsers(cabinSize, users.users)
-      Logger.debug(s"@@@ AFTER switch users $users")
-    }
-    else
-      users = new Users(cabinSize, users.users)
-  }
-
   def isCabinFullAt80Percents() = users.travelersSize > (cabinSize * 0.8).toInt
 
   // for testing
@@ -96,9 +86,7 @@ case class SimpleElevator(var higherFloor: Int, var cabinSize: Int, strategy: St
     users.tick(floor)
     users.removeDone()
 
-    val cmd = strategy.nextCommand(this)
-    switchUsersBehavior()
-    cmd
+    strategy.nextCommand(this)
   }
 
   def canStop() = {

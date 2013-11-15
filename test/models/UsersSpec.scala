@@ -11,7 +11,7 @@ object UsersSpec extends Specification {
   "Users" should {
 
     def threeUsers = {
-      val users = new NormalUsers()
+      val users = new Users()
       users.add(0, UP)
       users.add(0, DOWN)
       users.add(10, DOWN)
@@ -34,7 +34,7 @@ object UsersSpec extends Specification {
     }
 
     "flag next floor and go the toFloor" in {
-      val users = new NormalUsers()
+      val users = new Users()
       users.add(0, UP) // go to 5
       users.add(2, DOWN) // go to 0
       users.add(2, UP) // go to 19
@@ -65,7 +65,7 @@ object UsersSpec extends Specification {
      * <li>users.add(15, 13, DOWN, WAITING)
      */
     def usersWithTravelersAndWaiters = {
-      val users = new NormalUsers()
+      val users = new Users()
       users.add(10, 0, DOWN, TRAVELING)
       users.add(0, 2, UP, TRAVELING)
       users.add(1, 5, UP, TRAVELING)
@@ -93,7 +93,7 @@ object UsersSpec extends Specification {
      * <li>users.add(15, 13, DOWN, WAITING)
      */
     def usersWithOnlyWaiters = {
-      val users = new NormalUsers()
+      val users = new Users()
       users.add(2, 4, UP, WAITING)
       users.add(2, 0, DOWN, WAITING)
       users.add(15, 13, DOWN, WAITING)
@@ -110,7 +110,7 @@ object UsersSpec extends Specification {
     }
 
     def usersWithOnlyLosers = {
-      val users = new NormalUsers
+      val users = new Users
       users.add(0, 19, UP, TRAVELING)
       users.add(4, 8, UP, TRAVELING)
       users.add(10, 6, DOWN, TRAVELING)
@@ -132,7 +132,7 @@ object UsersSpec extends Specification {
     }
 
     def  usersWithOnlyTravelersAtFloor10AndMaxTravelersTo10 = {
-      val users = new NormalUsers(9)
+      val users = new Users(9)
       for (i <- 0 to users.maxTravelers) users.add(floor = 10, toFloor = i, DOWN, TRAVELING)
 
       users
@@ -151,7 +151,7 @@ object UsersSpec extends Specification {
     }
 
     "remove done users" in {
-      val users = new NormalUsers()
+      val users = new Users()
       users.add(0, UP)
       users.add(0, DOWN)
       users.add(10, DOWN)
