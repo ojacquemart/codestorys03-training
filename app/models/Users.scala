@@ -25,21 +25,21 @@ class Users(var maxTravelers: Int = 30) extends Reset {
     users += user
   }
 
+  def onNextCommand(floor: Int, nextFloorsToGo: MutableList[Int]) = {
+    updateNextFloorsToGo(floor, nextFloorsToGo)
+    tick(floor)
+    removeDone()
+  }
+
   /**
    * Update the toFloor for users who were waiting and just entered in the cabin.
-   *
-   * @param floor the current floor
-   * @param nextFloorsToGo the next floors to update.
-   *
-   * @return an empty Mutable list.
    */
-  def updateNextFloorsToGo(floor: Int, nextFloorsToGo: MutableList[Int]): MutableList[Int] = {
+  def updateNextFloorsToGo(floor: Int, nextFloorsToGo: MutableList[Int]) = {
     Logger.debug(s"@@@ Add next floors... $nextFloorsToGo")
     nextFloorsToGo.foreach(nextFloor => {
       flagNextToFloorToDefine(floor)
       goToFloor(nextFloor)
     })
-    MutableList()
   }
 
   def travelersSize = users.count(_.isTraveling())

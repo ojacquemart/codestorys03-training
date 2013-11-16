@@ -3,7 +3,7 @@
 # ~~~~
 
 # Home page
-GET        /status                 controllers.Application.status
+GET        /                      controllers.Application.status
 GET        /reset                 controllers.Application.reset(lowerFloor: Int, higherFloor: Int, cabinSize: Int, cause: String)
 GET        /call                  controllers.Application.call(atFloor: Int, to: String)
 GET        /go                    controllers.Application.go(floorToGo: Int)

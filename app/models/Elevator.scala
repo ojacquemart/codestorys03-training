@@ -8,8 +8,13 @@ trait Elevator extends Reset {
 
   var lowerFloor: Int = 0
   var higherFloor: Int
+
   def middleFloor = (higherFloor + lowerFloor) / 2 + 1
+
   var cabinSize: Int
+
+  var previousStatus: ElevatorStatus
+  var resets = MutableList[LastReset]()
 
   var floor: Int = 0
   var direction: Direction = UP
@@ -24,10 +29,13 @@ trait Elevator extends Reset {
   def needsToInverseDirection(): Boolean = (direction == UP && isAtTop) || (direction == DOWN && isAtBottom)
 
   def isAtTop: Boolean = floor == higherFloor
+
   def isAtBottom: Boolean = floor == lowerFloor
+
   def isAtMiddle: Boolean = floor == middleFloor
 
   def isDoorOpened = door == Door.OPEN
+
   def isDoorClosed = door == Door.CLOSE
 
   // visible for test
@@ -45,11 +53,15 @@ trait Elevator extends Reset {
   def go(toFloor: Int) {
     nextFloorsToGo += toFloor
   }
+
   def onUserExited {}
 
   def canDoNothing() = isAtMiddle && isEmpty()
+
   def canStop(): Boolean
+
   def getDirectionTypeForTravelers(): NextDirectionType.Value
+
   def getDirectionTypeForWaiters(): NextDirectionType.Value
 
   def isEmpty() = users.size == 0
@@ -58,16 +70,52 @@ trait Elevator extends Reset {
 
   // for testing
   def resetToFloor(lowerFloor: Int = 0, higherFloor: Int = 19, maxCabinSize: Int = 30) {
-    reset(0, higherFloor, maxCabinSize)
+    reset(0, higherFloor, maxCabinSize, "")
     floor = lowerFloor
   }
 
-  def reset(lowerFloor: Int = 0, higherFloor: Int = 19, maxCabinSize: Int = 30) {
+  def debugWaitersByFloor() = {
+    val byFloor: (User) => Int = u => u.fromFloor
+    group(users.waiters, byFloor)
+  }
+
+  def debugTravelersByFloor() = {
+    val toFloor: (User) => Int = u => u.toFloor
+    group(users.travelers, toFloor)
+  }
+
+  def group(list: MutableList[User], f: (User) => Int) = {
+    list.groupBy(f)
+      .map(u => (u._1, u._2.size))
+      .toList
+      .sortBy(_._1)
+      .map(w => Floor(w._1, w._2))
+  }
+
+  def reset(lowerFloor: Int = 0, higherFloor: Int = 19, maxCabinSize: Int = 30, cause: String) {
     floor = 0
     this.lowerFloor = lowerFloor
     this.higherFloor = higherFloor
     this.cabinSize = maxCabinSize
     reset()
+
+    resets += LastReset(cause = cause, status = previousStatus)
+  }
+
+  def getDebug(emptyReset: Boolean = false): ElevatorInfo = {
+    ElevatorInfo(
+    points,
+    getStatus,
+    if (emptyReset) List() else resets.toList,
+    UsersStatus(users.size, users.waitersSize, users.travelersSize,
+    debugWaitersByFloor(), debugTravelersByFloor())
+
+    )
+  }
+
+  def getStatus(): ElevatorStatus = {
+    ElevatorStatus(cabinSize, door.toString, direction.toString,
+      floor, lowerFloor, higherFloor, middleFloor)
   }
 
   def reset(): Unit = {
@@ -77,16 +125,21 @@ trait Elevator extends Reset {
     door = Door.CLOSE
     users.resetUsers(cabinSize)
   }
+
 }
 
 case class SimpleElevator(var higherFloor: Int, var cabinSize: Int, strategy: Strategy) extends Elevator {
 
-  def nextCommand() = {
-    nextFloorsToGo = users.updateNextFloorsToGo(floor, nextFloorsToGo)
-    users.tick(floor)
-    users.removeDone()
+  var previousStatus: ElevatorStatus = _
 
-    strategy.nextCommand(this)
+  def nextCommand() = {
+    users.onNextCommand(floor, nextFloorsToGo)
+    nextFloorsToGo = MutableList()
+
+    val command = strategy.nextCommand(this)
+    previousStatus = getStatus()
+
+    command
   }
 
   def canStop() = {
@@ -107,35 +160,6 @@ case class SimpleElevator(var higherFloor: Int, var cabinSize: Int, strategy: St
     users.getDirectionTypeForWaiters(floor, direction)
   }
 
-  def getStatus: String = s"""
-      points=$points, door=$door, direction=$direction
-      -
-      floor=$floor, higherFloor=$higherFloor, lowerFloor=$lowerFloor, atMiddleFloor=$isAtMiddle
-      -
-      totalUsers=${users.size}
-      nbWaiters=${users.waiters.size}
-      cabinSize=$cabinSize, nbTravelers=${users.travelersSize}
-      -
-      waiters=${debugWaitersByFloor()}
-      travelers=${debugTravelersByFloor()}
-      """
-
-  def debugWaitersByFloor() = {
-    val byFloor: (User) => Int = u => u.fromFloor
-    group(users.waiters, byFloor)
-  }
-  def debugTravelersByFloor() = {
-    val toFloor: (User) => Int = u => u.toFloor
-    group(users.travelers, toFloor)
-  }
-
-  def group(list: MutableList[User], f: (User) => Int) = {
-    list.groupBy(f)
-      .map(u => (u._1, u._2.size))
-      .toList
-      .sortBy(_._1)
-      .map(w => s"${w._1} -> ${w._2}").mkString(", ")
-  }
 
 }
 
