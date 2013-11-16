@@ -104,12 +104,11 @@ trait Elevator extends Reset {
 
   def getDebug(emptyReset: Boolean = false): ElevatorInfo = {
     ElevatorInfo(
-    points,
-    getStatus,
-    if (emptyReset) List() else resets.toList,
-    UsersStatus(users.size, users.waitersSize, users.travelersSize,
-    debugWaitersByFloor(), debugTravelersByFloor())
-
+      points,
+      getStatus(),
+      if (emptyReset) List() else resets.toList,
+      UsersStatus(users.size, users.waitersSize, users.travelersSize,
+      debugWaitersByFloor(), debugTravelersByFloor())
     )
   }
 
