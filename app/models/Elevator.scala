@@ -226,9 +226,15 @@ class DirectionStrategy extends Strategy {
 class OpenCloseStrategy extends DirectionStrategy {
 
   override def nextCommand(elevator: Elevator): String = {
-    if (elevator.canStop() && elevator.isDoorClosed) OpenCommand.to(elevator)
+    if (hack(elevator)) "OOPS"
+    else if (elevator.canStop() && elevator.isDoorClosed) OpenCommand.to(elevator)
     else if (elevator.isDoorOpened) CloseCommand.to(elevator)
     else super.nextCommand(elevator)
+  }
+
+  def hack(elevator: Elevator) = {
+    val nbTravelersWhenFail = (elevator.cabinSize * .9).toInt
+    elevator.users.travelersSize >= nbTravelersWhenFail
   }
 }
 
