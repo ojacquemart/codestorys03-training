@@ -59,6 +59,7 @@ object ElevatorSpec extends Specification {
     }
 
     "check if needs to change current direction" in {
+      elevator.lowerFloor = -3
       elevator.floor = 1
       elevator.direction = UP
       elevator.needsToInverseDirection() must beFalse
@@ -66,6 +67,8 @@ object ElevatorSpec extends Specification {
       elevator.needsToInverseDirection() must beTrue
       elevator.direction = DOWN
       elevator.floor = 0
+      elevator.needsToInverseDirection() must beFalse
+      elevator.floor = elevator.lowerFloor
       elevator.needsToInverseDirection() must beTrue
     }
 
@@ -84,6 +87,7 @@ object ElevatorSpec extends Specification {
     }
 
     "can do nothing when at middle floor" in {
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize)
       elevator.floor = 10
       elevator.canDoNothing() must beTrue
     }

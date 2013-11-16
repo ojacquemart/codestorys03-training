@@ -24,7 +24,7 @@ trait Elevator extends Reset {
   def needsToInverseDirection(): Boolean = (direction == UP && isAtTop) || (direction == DOWN && isAtBottom)
 
   def isAtTop: Boolean = floor == higherFloor
-  def isAtBottom: Boolean = floor == 0
+  def isAtBottom: Boolean = floor == lowerFloor
   def isAtMiddle: Boolean = floor == middleFloor
 
   def isDoorOpened = door == Door.OPEN
@@ -153,7 +153,7 @@ class DirectionStrategy extends Strategy {
   def nextCommand(elevator: Elevator): String = {
     val needsToInverseDirection = elevator.needsToInverseDirection()
     if (needsToInverseDirection) {
-      Logger.debug("At top or bottom floor => inverse the direction")
+      Logger.debug("inverse the direction")
       val direction = if (needsToInverseDirection) elevator.direction.inverse else elevator.direction
 
       fromDirection(direction).to(elevator)
