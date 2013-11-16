@@ -13,7 +13,7 @@ trait Elevator extends Reset {
 
   var cabinSize: Int
 
-  var previousStatus: ElevatorStatus
+//  var previousStatus: ElevatorStatus
   var resets = MutableList[LastReset]()
 
   var floor: Int = 0
@@ -99,23 +99,23 @@ trait Elevator extends Reset {
     this.cabinSize = maxCabinSize
     reset()
 
-    resets += LastReset(cause = cause, status = previousStatus)
+//    resets += LastReset(cause = cause, status = previousStatus)
   }
 
-  def getDebug(emptyReset: Boolean = false): ElevatorInfo = {
-    ElevatorInfo(
-      points,
-      getStatus(),
-      if (emptyReset) List() else resets.toList,
-      UsersStatus(users.size, users.waitersSize, users.travelersSize,
-      debugWaitersByFloor(), debugTravelersByFloor())
-    )
-  }
-
-  def getStatus(): ElevatorStatus = {
-    ElevatorStatus(cabinSize, door.toString, direction.toString,
-      floor, lowerFloor, higherFloor, middleFloor)
-  }
+//  def getDebug(emptyReset: Boolean = false): ElevatorInfo = {
+//    ElevatorInfo(
+//      points,
+//      getStatus(),
+//      if (emptyReset) List() else resets.toList,
+//      UsersStatus(users.size, users.waitersSize, users.travelersSize,
+//      debugWaitersByFloor(), debugTravelersByFloor())
+//    )
+//  }
+//
+//  def getStatus(): ElevatorStatus = {
+//    ElevatorStatus(cabinSize, door.toString, direction.toString,
+//      floor, lowerFloor, higherFloor, middleFloor)
+//  }
 
   def reset(): Unit = {
     Logger.debug("Elevator reset")
@@ -136,7 +136,7 @@ case class SimpleElevator(var higherFloor: Int, var cabinSize: Int, strategy: St
     nextFloorsToGo = MutableList()
 
     val command = strategy.nextCommand(this)
-    previousStatus = getStatus()
+//    previousStatus = getStatus()
 
     command
   }
