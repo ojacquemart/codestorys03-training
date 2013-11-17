@@ -130,9 +130,13 @@ class Users(var maxTravelers: Int = 30) extends Reset {
     nbWaitersAtInDirection > 0
   }
 
-  def tick(floor: Int) = users.foreach(_.tick(floor))
+  def onNextCommand(floor: Int, nextFloorsToGo: MutableList[Int]) = {
+    updateNextFloorsToGo(floor, nextFloorsToGo)
+    tick(floor)
+    removeDone()
+  }
 
-  def checkStateAt(floor: Int) = users.foreach(_.stopTravelAt(floor))
+  def tick(floor: Int) = users.foreach(_.tick(floor))
 
   def removeDone() = users = users.filterNot(_.isDone)
 
@@ -165,6 +169,23 @@ class Users(var maxTravelers: Int = 30) extends Reset {
 
       if (directionToWaiter) NextDirectionType.TO_UP else NextDirectionType.TO_DOWN
     }
+  }
+
+  def waitersByFloor() = {
+    val byFloor: (User) => Int = u => u.fromFloor
+    group(waiters, byFloor)
+  }
+  def travelersByFloor() = {
+    val toFloor: (User) => Int = u => u.toFloor
+    group(travelers, toFloor)
+  }
+
+  def group(list: MutableList[User], f: (User) => Int) = {
+    list.groupBy(f)
+      .map(u => (u._1, u._2.size))
+      .toList
+      .sortBy(_._1)
+      .map(u => UserByFloor(u._1, u._2))
   }
 
   def resetUsers(maxTravelers: Int) = {

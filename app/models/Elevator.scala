@@ -3,23 +3,27 @@ package models
 import play.api.Logger
 
 import scala.collection.mutable.MutableList
+import play.api.libs.json.Json
 
 trait Elevator extends Reset {
+  var hits = 0
+  var points = 0
 
-  var lowerFloor: Int = 0
-  var higherFloor: Int
-  def middleFloor = (higherFloor + lowerFloor) / 2 + 1
   var cabinSize: Int
 
-  var floor: Int = 0
+  var floor = 0
+  var lowerFloor = 0
+  var higherFloor: Int
+  def middleFloor = (higherFloor / 2) + 1
+
   var direction: Direction = UP
   var door = Door.CLOSE
-  var points = 0
 
   var users = new Users(cabinSize)
 
-  // To store the next goTo and update theirs values to the users.
   var nextFloorsToGo = MutableList[Int]()
+
+  var resets = MutableList[SimpleReset]()
 
   def needsToInverseDirection(): Boolean = (direction == UP && isAtTop) || (direction == DOWN && isAtBottom)
 
@@ -62,7 +66,11 @@ trait Elevator extends Reset {
     floor = lowerFloor
   }
 
-  def reset(lowerFloor: Int = 0, higherFloor: Int = 19, maxCabinSize: Int = 30) {
+  def reset(lowerFloor: Int = 0, higherFloor: Int = 19, maxCabinSize: Int = 30, cause: String = "") {
+    if (resets.size > 50) resets = MutableList()
+
+    resets += SimpleReset(cause, ElevatorStatus.get(this))
+
     floor = 0
     this.lowerFloor = lowerFloor
     this.higherFloor = higherFloor
@@ -82,9 +90,9 @@ trait Elevator extends Reset {
 case class SimpleElevator(var higherFloor: Int, var cabinSize: Int, strategy: Strategy) extends Elevator {
 
   def nextCommand() = {
-    nextFloorsToGo = users.updateNextFloorsToGo(floor, nextFloorsToGo)
-    users.tick(floor)
-    users.removeDone()
+    hits += 1
+    users.onNextCommand(floor, nextFloorsToGo)
+    nextFloorsToGo = MutableList()
 
     strategy.nextCommand(this)
   }
@@ -107,35 +115,7 @@ case class SimpleElevator(var higherFloor: Int, var cabinSize: Int, strategy: St
     users.getDirectionTypeForWaiters(floor, direction)
   }
 
-  def getStatus: String = s"""
-      points=$points, door=$door, direction=$direction
-      -
-      floor=$floor, higherFloor=$higherFloor, lowerFloor=$lowerFloor, atMiddleFloor=$isAtMiddle
-      -
-      totalUsers=${users.size}
-      nbWaiters=${users.waiters.size}
-      cabinSize=$cabinSize, nbTravelers=${users.travelersSize}
-      -
-      waiters=${debugWaitersByFloor()}
-      travelers=${debugTravelersByFloor()}
-      """
-
-  def debugWaitersByFloor() = {
-    val byFloor: (User) => Int = u => u.fromFloor
-    group(users.waiters, byFloor)
-  }
-  def debugTravelersByFloor() = {
-    val toFloor: (User) => Int = u => u.toFloor
-    group(users.travelers, toFloor)
-  }
-
-  def group(list: MutableList[User], f: (User) => Int) = {
-    list.groupBy(f)
-      .map(u => (u._1, u._2.size))
-      .toList
-      .sortBy(_._1)
-      .map(w => s"${w._1} -> ${w._2}").mkString(", ")
-  }
+  def getStatus: String = Json.toJson(ElevatorRecap.get(this)).toString
 
 }
 
@@ -153,7 +133,7 @@ class DirectionStrategy extends Strategy {
   def nextCommand(elevator: Elevator): String = {
     val needsToInverseDirection = elevator.needsToInverseDirection()
     if (needsToInverseDirection) {
-      Logger.debug("inverse the direction")
+      Logger.debug("At top or bottom floor => inverse the direction")
       val direction = if (needsToInverseDirection) elevator.direction.inverse else elevator.direction
 
       fromDirection(direction).to(elevator)
@@ -207,5 +187,6 @@ class OpenCloseStrategy extends DirectionStrategy {
     else if (elevator.isDoorOpened) CloseCommand.to(elevator)
     else super.nextCommand(elevator)
   }
+
 }
 

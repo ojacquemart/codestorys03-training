@@ -4,6 +4,7 @@ import play.api.mvc._
 
 import play.api.Logger
 import models._
+import play.api.libs.json.Json
 
 object Application extends Controller {
 
@@ -12,7 +13,7 @@ object Application extends Controller {
   def reset(lowerFloor: Int, higherFloor: Int, cabinSize: Int, cause: String) = Action {
     Logger.info(s"""@@@ RESET
            Reset lower=$lowerFloor, higher=$higherFloor, cabinSize=$cabinSize, cause='$cause'""")
-    elevator.reset(lowerFloor, higherFloor, cabinSize)
+    elevator.reset(lowerFloor, higherFloor, cabinSize, cause)
 
     Ok
   }
@@ -48,13 +49,17 @@ object Application extends Controller {
   def nextCommand = Action {
     val nextCommand = elevator.nextCommand()
     Logger.info(s"@@@ NEXT COMMAND: $nextCommand")
-    Logger.info(s"@@@ NEXT COMMAND:  status afterAction: ${elevator.getStatus}")
+    Logger.info(s"@@@ NEXT COMMAND, debug: ${elevator.getStatus}")
 
     Ok(nextCommand)
   }
 
   def status = Action {
-    Ok(elevator.getStatus)
+    Ok(Json.toJson(ElevatorRecap.get(elevator)))
+  }
+
+  def resets = Action {
+    Ok(Json.arr(elevator.resets))
   }
 
 

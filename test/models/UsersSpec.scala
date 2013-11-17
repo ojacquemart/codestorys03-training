@@ -155,7 +155,6 @@ object UsersSpec extends Specification {
       users.add(0, UP)
       users.add(0, DOWN)
       users.add(10, DOWN)
-      users.checkStateAt(0)
 
       users.size must be equalTo(3)
       users.users.foreach(_.state = UserState.DONE)
