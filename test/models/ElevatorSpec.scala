@@ -31,14 +31,15 @@ object ElevatorSpec extends Specification {
     }
 
     "reset lower floor, higherFloor and cabinSize changing default values" in {
-      elevator.floor = 2
-      elevator.resetToFloor(10, MaxFloor, 15)
-      elevator.floor must be equalTo(10)
+      elevator.resetToFloor(-13, MaxFloor, 15)
+      elevator.floor must be equalTo(0)
+      elevator.lowerFloor must be equalTo(-13)
       elevator.higherFloor must be equalTo(19)
       elevator.cabinSize must be equalTo(15)
     }
 
     "check if is at bottom floor" in {
+      elevator.resetToFloor(0, MaxFloor, 10)
       elevator.floor = 0
       elevator.isAtBottom must beTrue
       elevator.floor = 1
@@ -56,9 +57,14 @@ object ElevatorSpec extends Specification {
       elevator.isAtMiddle must beFalse
       elevator.floor = 10
       elevator.isAtMiddle must beTrue
+
+      elevator.resetToFloor(-13, 27, 10)
+      elevator.floor = 8
+      elevator.isAtMiddle must beTrue
     }
 
     "check if needs to change current direction" in {
+      elevator.resetToFloor(-3, MaxFloor, 10)
       elevator.lowerFloor = -3
       elevator.floor = 1
       elevator.direction = UP

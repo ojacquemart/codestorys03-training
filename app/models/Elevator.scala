@@ -14,7 +14,7 @@ trait Elevator extends Reset {
   var floor = 0
   var lowerFloor = 0
   var higherFloor: Int
-  def middleFloor = (higherFloor / 2) + 1
+  def middleFloor = ((lowerFloor + higherFloor) / 2) + 1
 
   var direction: Direction = UP
   var door = Door.CLOSE
@@ -61,9 +61,9 @@ trait Elevator extends Reset {
   def isCabinFullAt80Percents() = users.travelersSize > (cabinSize * 0.8).toInt
 
   // for testing
-  def resetToFloor(lowerFloor: Int = 0, higherFloor: Int = 19, maxCabinSize: Int = 30) {
-    reset(0, higherFloor, maxCabinSize)
-    floor = lowerFloor
+  def resetToFloor(lowerFloor: Int = 0, higherFloor: Int = 19, maxCabinSize: Int = 30, currentFloor: Int = 0) {
+    reset(lowerFloor, higherFloor, maxCabinSize)
+    floor = currentFloor
   }
 
   def reset(lowerFloor: Int = 0, higherFloor: Int = 19, maxCabinSize: Int = 30, cause: String = "") {

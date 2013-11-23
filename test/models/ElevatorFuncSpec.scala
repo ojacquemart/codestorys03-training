@@ -23,7 +23,7 @@ object ElevatorFuncSpec extends Specification {
     }
 
     "not move if no one is in the cabin & at the middle floor" in {
-      elevator.resetToFloor(10, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 10)
       elevator.nextCommand() must be equalTo("NOTHING")
       elevator.nextCommand() must be equalTo("NOTHING")
       elevator.nextCommand() must be equalTo("NOTHING")
@@ -31,7 +31,7 @@ object ElevatorFuncSpec extends Specification {
     }
 
     "not go and up or down continually with current in middle of two calls" in {
-      elevator.resetToFloor(2, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 2)
       elevator.direction = UP
       elevator.call(atFloor = 0, UP)
       elevator.call(atFloor = 4, UP)
@@ -46,7 +46,7 @@ object ElevatorFuncSpec extends Specification {
     }
 
     "change direction when no go and one call" in {
-      elevator.resetToFloor(5, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 5)
       elevator.direction = UP
       elevator.call(atFloor = 2, UP)
       elevator.nextCommand() must be equalTo("DOWN")
@@ -59,7 +59,7 @@ object ElevatorFuncSpec extends Specification {
     }
 
     "deserves a go and and has to search for calls in higher floors" in {
-      elevator.resetToFloor(5, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 5)
       elevator.direction = UP
       elevator.callAndGo(atFloor = 5, toFloor = 3, DOWN)
       elevator.call(atFloor = 6, UP)
@@ -73,7 +73,7 @@ object ElevatorFuncSpec extends Specification {
     }
 
     "deserves a go and and has to search for calls in lower floors" in {
-      elevator.resetToFloor(15, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 15)
       elevator.direction = UP
       elevator.reset
       elevator.callAndGo(atFloor = 15, toFloor = 17)
@@ -87,7 +87,7 @@ object ElevatorFuncSpec extends Specification {
     }
 
     "not keep two calls in different direction to the same floor outside" in {
-      elevator.resetToFloor(10, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 10)
       elevator.call(atFloor = 10, UP)
       elevator.call(atFloor = 10, DOWN)
 
@@ -99,7 +99,7 @@ object ElevatorFuncSpec extends Specification {
     }
 
     "deserves two consecutive gos" in {
-      elevator.resetToFloor(15, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 15)
       elevator.direction = UP
       elevator.callAndGo(atFloor = 15, toFloor = 17)
       elevator.callAndGo(atFloor = 15, toFloor = 18)
@@ -116,12 +116,12 @@ object ElevatorFuncSpec extends Specification {
     }
 
     "does not need to stop if no go call or" in {
-      elevator.resetToFloor(1, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 1)
       elevator.canStop() must beFalse
     }
 
     "force direction to middle when no another call or go in current direction" in {
-      elevator.resetToFloor(5, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 5)
       elevator.call(atFloor = 4, UP)
 
       elevator.nextCommand() must be equalTo("DOWN")
@@ -144,7 +144,7 @@ object ElevatorFuncSpec extends Specification {
     }
 
     "stops with a go at a floor" in {
-      elevator.resetToFloor(1, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 1)
       elevator.direction = UP
 
       elevator.callAndGo(atFloor = 1, toFloor = 3)
@@ -159,7 +159,7 @@ object ElevatorFuncSpec extends Specification {
     }
 
     "stops with a a call at a floor in the same direction" in {
-      elevator.resetToFloor(1, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 1)
       elevator.direction = UP
 
       elevator.call(atFloor = 3, UP)
@@ -173,7 +173,7 @@ object ElevatorFuncSpec extends Specification {
     }
 
     "stops with only one call at a floor in the opposite direction" in {
-      elevator.resetToFloor(1, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 1)
       elevator.direction = UP
 
       elevator.call(atFloor = 3, DOWN)
@@ -187,7 +187,7 @@ object ElevatorFuncSpec extends Specification {
     }
 
     "stops with only one call at a floor in the opposite direction and then a go" in {
-      elevator.resetToFloor(10, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 10)
       elevator.direction = DOWN
 
       elevator.call(atFloor = 8, UP)
@@ -206,7 +206,7 @@ object ElevatorFuncSpec extends Specification {
     }
 
     "handle a go and a call in the same direction" in {
-      elevator.resetToFloor(1, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 1)
       elevator.direction = UP
 
       elevator.callAndGo(atFloor = 1, toFloor = 5)
@@ -225,7 +225,7 @@ object ElevatorFuncSpec extends Specification {
     }
 
     "handle a go and a call in the opposite direction" in {
-      elevator.resetToFloor(1, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 1)
       elevator.direction = UP
 
       elevator.callAndGo(atFloor = 1, toFloor = 5)
@@ -244,7 +244,7 @@ object ElevatorFuncSpec extends Specification {
     }
 
     "not fucking go UP and DOWN" in {
-      elevator.resetToFloor(5, MaxFloor, MaxCabinSize)
+      elevator.resetToFloor(0, MaxFloor, MaxCabinSize, 5)
       elevator.direction = DOWN
 
       elevator.call(atFloor = 2, UP)
@@ -271,7 +271,7 @@ object ElevatorFuncSpec extends Specification {
      */
     def resetToFloor5WithCabinSizeAt10 ()= {
       val cabinSize = 10
-      elevator.resetToFloor(5, MaxFloor, cabinSize)
+      elevator.resetToFloor(0, MaxFloor, cabinSize, 5)
     }
 
     "not take waiters if cabin is full with one waiter going in the same direction" in {
