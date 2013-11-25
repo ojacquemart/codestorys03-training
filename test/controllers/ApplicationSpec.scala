@@ -29,7 +29,7 @@ class ApplicationSpec extends Specification {
     }
 
     "send 200 on reset" in new WithApplication {
-      assert200("/reset?lowerFloor=0&higherFloor=19&cabinSize=30&cabinCount=2&cause=Bad+request")
+      assert200("/reset?lowerFloor=0&higherFloor=19&cabinSize=30&cabinCount=1&cause=Bad+request")
     }
     "send 200 on nextCommands" in new WithApplication {
       val result = assert200("/nextCommands")
