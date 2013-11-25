@@ -4,11 +4,10 @@ import play.api.Logger
 import scala.collection.mutable
 
 case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, val size: Int) {
-
   val users = new Users(size)
   val strategy = new OpenCloseStrategy()
 
-  var floor = 0
+  var floor = -1
   def middleFloor = ((lowerFloor + higherFloor) / 2) + 1
 
   var direction: Direction = UP
