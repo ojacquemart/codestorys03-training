@@ -5,10 +5,10 @@
 GET        /                      controllers.Application.status
 GET        /resets                controllers.Application.resets
 
-GET        /reset                 controllers.Application.reset(lowerFloor: Int, higherFloor: Int, cabinSize: Int, cause: String)
+GET        /reset                 controllers.Application.reset(lowerFloor: Int, higherFloor: Int, cabinSize: Int, cabinCount: Int, cause: String)
 GET        /call                  controllers.Application.call(atFloor: Int, to: String)
-GET        /go                    controllers.Application.go(floorToGo: Int)
-GET        /userHasEntered        controllers.Application.userHasEntered
-GET        /userHasExited         controllers.Application.userHasExited
+GET        /go                    controllers.Application.go(cabin: Int, floorToGo: Int)
+GET        /userHasEntered        controllers.Application.userHasEntered(cabin: Int)
+GET        /userHasExited         controllers.Application.userHasExited(cabin: Int)
 
-GET        /nextCommand           controllers.Application.nextCommand
+GET        /nextCommands           controllers.Application.nextCommands

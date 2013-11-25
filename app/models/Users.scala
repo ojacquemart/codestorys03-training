@@ -28,7 +28,7 @@ class Users(var maxTravelers: Int = 30) extends Reset {
   /**
    * Update the toFloor for users who were waiting and just entered in the cabin.
    */
-  def updateNextFloorsToGo(floor: Int, nextFloorsToGo: MutableList[Int]) = {
+  def updateNextFloorsToGo(floor: Int, nextFloorsToGo: MutableList[NextFloor]) = {
     Logger.debug(s"@@@ Add next floors... $nextFloorsToGo")
     nextFloorsToGo.foreach(nextFloor => {
       flagNextToFloorToDefine(floor)
@@ -56,10 +56,10 @@ class Users(var maxTravelers: Int = 30) extends Reset {
   }
 
   // When user goes to a floor
-  def goToFloor(floor: Int) = {
+  def goToFloor(nextFloor: NextFloor) = {
     users
       .find(_.isNextToFloorStateToNextToDefine)
-      .map(_.setupToFloor(floor))
+      .map(_.setupToFloor(nextFloor))
   }
 
   def stopTravelersAt(floor: Int) = {
@@ -124,8 +124,8 @@ class Users(var maxTravelers: Int = 30) extends Reset {
     nbWaitersAtInDirection > 0
   }
 
-  def onNextCommand(floor: Int, nextFloorsToGo: MutableList[Int]) = {
-    updateNextFloorsToGo(floor, nextFloorsToGo)
+  def onNextCommand(floor: Int, nextFloors: MutableList[NextFloor]) = {
+    updateNextFloorsToGo(floor, nextFloors)
     tick(floor)
     removeDone()
   }

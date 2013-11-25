@@ -6,14 +6,19 @@ import play.api.Logger
 import models._
 import play.api.libs.json.Json
 
+import scala.collection.mutable.MutableList
+
 object Application extends Controller {
 
-  val elevator = new SimpleElevator(19, 30, new OpenCloseStrategy())
+  var lastResets = MutableList[SimpleReset]()
+  var elevator = Elevator(lowerFloor = 0, higherFloor = 42, cabinSize = 10, cabinCount = 2)
 
-  def reset(lowerFloor: Int, higherFloor: Int, cabinSize: Int, cause: String) = Action {
+  def reset(lowerFloor: Int, higherFloor: Int, cabinSize: Int, cabinCount: Int, cause: String) = Action {
     Logger.info(s"""@@@ RESET
-           Reset lower=$lowerFloor, higher=$higherFloor, cabinSize=$cabinSize, cause='$cause'""")
-    elevator.reset(lowerFloor, higherFloor, cabinSize, cause)
+           Reset lower=$lowerFloor, higher=$higherFloor, cabinSize=$cabinSize, cabinCount=$cabinCount cause='$cause'""")
+    lastResets += SimpleReset(cause, ElevatorStatus.get(elevator))
+
+    elevator = Elevator(lowerFloor, higherFloor, cabinSize, cabinCount)
 
     Ok
   }
@@ -25,33 +30,33 @@ object Application extends Controller {
     Ok
   }
 
-  def go(floorToGo: Int) = Action {
-    Logger.info(s"@@@ GO TO $floorToGo")
-    elevator.go(floorToGo)
+  def go(cabin: Int, floorToGo: Int) = Action {
+    Logger.info(s"@@@ GO IN CABIN $cabin TO $floorToGo")
+    elevator.go(cabin, floorToGo)
 
     Ok
   }
 
-  def userHasEntered = Action {
-    Logger.info(s"@@@ USER ENTERED AT ${elevator.floor}")
+  def userHasEntered(cabin: Int) = Action {
+    Logger.info(s"@@@ USER ENTERED IN $cabin")
     elevator.userHasEntered
 
     Ok
   }
 
-  def userHasExited = Action {
-    Logger.info(s"@@@ USER EXITED AT ${elevator.floor}")
+  def userHasExited(cabin: Int) = Action {
+    Logger.info(s"@@@ USER EXITED FROM $cabin")
     elevator.onUserExited
 
     Ok
   }
 
-  def nextCommand = Action {
-    val nextCommand = elevator.nextCommand()
-    Logger.info(s"@@@ NEXT COMMAND: $nextCommand")
+  def nextCommands = Action {
+    val nextCommands = elevator.nextCommands()
+    Logger.info(s"@@@ NEXT COMMANDS: $nextCommands")
     Logger.info(s"@@@ NEXT COMMAND, debug: ${elevator.getStatus}")
 
-    Ok(nextCommand)
+    Ok(nextCommands)
   }
 
   def status = Action {
@@ -59,7 +64,7 @@ object Application extends Controller {
   }
 
   def resets = Action {
-    Ok(Json.arr(elevator.resets))
+    Ok(Json.arr(lastResets))
   }
 
 

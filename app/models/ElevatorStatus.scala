@@ -4,31 +4,51 @@ import org.joda.time.DateTime
 import play.api.libs.json.{JsValue, Writes, Json}
 import org.joda.time.format.DateTimeFormat
 
-case class ElevatorRecap(status: ElevatorStatus, users: UsersStatus)
+case class ElevatorRecap(status: ElevatorStatus)
 
 object ElevatorRecap {
 
-  implicit val elevatorStatusWriter = Json.writes[ElevatorStatus]
   implicit val usersStatusWriter = Json.writes[UsersStatus]
+  implicit val singleCabinWriter = Json.writes[CabinStatus]
+  implicit val elevatorStatusWriter = Json.writes[ElevatorStatus]
   implicit val writer = Json.writes[ElevatorRecap]
 
   def get(elevator: Elevator) = {
     new ElevatorRecap(
-      ElevatorStatus.get(elevator),
-      UsersStatus.get(elevator)
+      ElevatorStatus.get(elevator)
     )
   }
 }
 
 case class ElevatorStatus(
   hits: Int,
-  floor: Int,
-  cabinSize: Int,
-  door: String,
-  direction: String,
-  lowerFloor: Int,
-  higherFloor: Int,
-  middleFloor: Int)
+  cabinsStatus: List[CabinStatus])
+
+case class CabinStatus(
+   index: Int,
+   floor: Int,
+   cabinSize: Int,
+   door: String,
+   direction: String,
+   lowerFloor: Int,
+   higherFloor: Int,
+   middleFloor: Int,
+   usersStatus: UsersStatus)
+
+object CabinStatus {
+
+  def get(cabin: Cabin) = {
+    new CabinStatus(
+      cabin.index,
+      cabin.floor,
+      cabin.size,
+      cabin.door.toString,
+      cabin.direction.toString,
+      cabin.lowerFloor, cabin.higherFloor,
+      cabin.middleFloor,
+      UsersStatus.get(cabin))
+  }
+}
 
 case class UsersStatus(
   total: Int,
@@ -38,32 +58,25 @@ case class UsersStatus(
   travelersByFloor: List[UserByFloor])
 
 object UsersStatus {
-  def get(elevator: Elevator) = {
+  def get(cabin: Cabin) = {
     new UsersStatus(
-      elevator.users.size,
-      elevator.users.waitersSize,
-      elevator.users.travelersSize,
-      elevator.users.waitersByFloor,
-      elevator.users.travelersByFloor
+      cabin.users.size,
+      cabin.users.waitersSize,
+      cabin.users.travelersSize,
+      cabin.users.waitersByFloor,
+      cabin.users.travelersByFloor
     )
   }
 }
 
 object ElevatorStatus {
 
+  import ElevatorRecap._
   implicit val writer = Json.writes[ElevatorStatus]
 
   def get(elevator: Elevator) = {
-    new ElevatorStatus(
-      elevator.hits,
-      elevator.floor,
-      elevator.cabinSize,
-      elevator.door.toString,
-      elevator.direction.toString,
-      elevator.lowerFloor,
-      elevator.higherFloor,
-      elevator.middleFloor
-    )
+    val cabinsStatus = elevator.cabins.map(c => CabinStatus.get(c))
+    new ElevatorStatus(elevator.hits, cabinsStatus)
   }
 
 }

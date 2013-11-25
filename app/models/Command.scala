@@ -1,51 +1,51 @@
 package models
 
 trait Command {
-  def to(elevator: Elevator): String
+  def to(cabin: Cabin): String
 }
 
 object NothingCommand extends Command {
-  def to(elevator: Elevator): String = "NOTHING"
+  def to(cabin: Cabin): String = "NOTHING"
 }
 
 object UpCommand extends Command {
-  def to(elevator: Elevator): String = {
-    if (elevator.isAtTop) NothingCommand.to(elevator)
+  def to(cabin: Cabin): String = {
+    if (cabin.isAtTop) NothingCommand.to(cabin)
     else {
-      elevator.floor += 1
-      elevator.direction = UP
+      cabin.floor += 1
+      cabin.direction = UP
       return "UP"
     }
   }
 }
 
 object DownCommand extends Command {
-  def to(elevator: Elevator): String = {
-    if (elevator.isAtBottom) NothingCommand.to(elevator)
+  def to(cabin: Cabin): String = {
+    if (cabin.isAtBottom) NothingCommand.to(cabin)
     else {
-      elevator.floor -= 1
-      elevator.direction = DOWN
+      cabin.floor -= 1
+      cabin.direction = DOWN
       "DOWN"
     }
   }
 }
 
 object OpenCommand extends Command {
-  def to(elevator: Elevator): String = {
-    if (elevator.door == Door.CLOSE) {
-      elevator.door = Door.OPEN
+  def to(cabin: Cabin): String = {
+    if (cabin.door == Door.CLOSE) {
+      cabin.door = Door.OPEN
       "OPEN"
     }
-    else NothingCommand.to(elevator)
+    else NothingCommand.to(cabin)
   }
 }
 
 object CloseCommand extends Command {
-  def to(elevator: Elevator): String = {
-    if (elevator.door == Door.OPEN) {
-      elevator.door = Door.CLOSE
+  def to(cabin: Cabin): String = {
+    if (cabin.door == Door.OPEN) {
+      cabin.door = Door.CLOSE
       "CLOSE"
     }
-    else NothingCommand.to(elevator)
+    else NothingCommand.to(cabin)
   }
 }

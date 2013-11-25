@@ -10,7 +10,7 @@ object ToFloorState  extends Enumeration {
   val UNDEFINED, NEXT_TO_DEFINE, DEFINED = Value
 }
 
-case class User(fromFloor: Int, var toFloor: Int = -1, direction: Direction = UP) {
+case class User(fromFloor: Int, var toFloor: Int = -1, var cabin: Int = 0, direction: Direction = UP) {
 
   import UserState._
   import ToFloorState._
@@ -26,8 +26,9 @@ case class User(fromFloor: Int, var toFloor: Int = -1, direction: Direction = UP
   def setToFloorStateToDefined = toFloorState = DEFINED
   def isNextToFloorStateToNextToDefine = toFloorState == NEXT_TO_DEFINE
 
-  def setupToFloor(floor: Int) = {
-    toFloor = floor
+  def setupToFloor(nextFloor: NextFloor) = {
+    this.toFloor = nextFloor.floor
+    this.cabin = nextFloor.cabin
     setToFloorStateToDefined
     travel()
   }
