@@ -12,7 +12,7 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   // only waiters
   val users = new Users(cabinSize)
 
-  val cabins = (0 to cabinCount).toList.map {
+  val cabins = (0 until cabinCount).toList.map {
     i => new Cabin(i, lowerFloor, higherFloor, cabinSize)
   }
 

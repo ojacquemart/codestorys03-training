@@ -28,14 +28,24 @@ class ApplicationSpec extends Specification {
       ok
     }
 
-    "send 200 on reset" in new WithApplication {
-      assert200("/reset?lowerFloor=0&higherFloor=19&cabinSize=30&cabinCount=1&cause=Bad+request")
-    }
-    "send 200 on nextCommands" in new WithApplication {
+    def assertNextsCommands(cabinCount: Int) = {
       val result = assert200("/nextCommands")
       val commands = contentAsString(result).split("\n")
       commands.forall(_ == "UP") must beTrue
-      commands.size must be equalTo(2)
+      commands.size must be equalTo(cabinCount)
+    }
+
+    "send 200 on reset with one cabin" in new WithApplication {
+      assert200("/reset?lowerFloor=0&higherFloor=19&cabinSize=30&cabinCount=1&cause=Bad+request")
+    }
+    "send 200 on nextCommands" in new WithApplication {
+      assertNextsCommands(1)
+    }
+    "send 200 on reset with two cabins" in new WithApplication {
+      assert200("/reset?lowerFloor=0&higherFloor=19&cabinSize=30&cabinCount=2&cause=Bad+request")
+    }
+    "send 200 on nextCommands" in new WithApplication {
+      assertNextsCommands(2)
     }
     "send 200 on call" in new WithApplication {
       assert200("/call?atFloor=1&to=UP")
