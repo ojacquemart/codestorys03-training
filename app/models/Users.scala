@@ -31,7 +31,7 @@ class Users(var maxTravelers: Int = 30) extends Reset {
   def updateNextFloorsToGo(floor: Int, nextFloorsToGo: MutableList[NextFloor]) = {
     Logger.debug(s"@@@ Add next floors... $nextFloorsToGo")
     nextFloorsToGo.foreach(nextFloor => {
-      flagNextToFloorToDefine(floor)
+      flagNextToFloorToDefine(floor, nextFloor.cabin)
       goToFloor(nextFloor)
     })
   }
@@ -49,9 +49,9 @@ class Users(var maxTravelers: Int = 30) extends Reset {
   def donerScores: Int = doners.map(_.score()).sum
 
   // When user has entered
-  def flagNextToFloorToDefine(floor: Int) = {
+  def flagNextToFloorToDefine(floor: Int, cabin: Int) = {
     users
-      .find(u => u.fromFloor == floor && u.isToFloorStateUndefined)
+      .find(u => u.cabin == cabin && u.fromFloor == floor && u.isToFloorStateUndefined)
       .map(_.setToFloorStateToNextToDefine)
   }
 

@@ -9,9 +9,6 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   var hits = 0
   var points = 0
 
-  // only waiters
-  val users = new Users(cabinSize)
-
   val cabins = (0 until cabinCount).toList.map {
     i => new Cabin(i, lowerFloor, higherFloor, cabinSize)
   }
@@ -25,7 +22,7 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   }
 
   def call(atFloor: Int, direction: Direction) {
-    users.add(atFloor, direction)
+    cabins.foreach(c => c.users.add(atFloor, direction))
   }
 
   def userHasEntered {}
@@ -38,7 +35,7 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
 
   def nextCommands(): String = {
     hits += 1
-    cabins.foreach(e => e.beforeNextCommand(nextFloors))
+    cabins.foreach(c => c.beforeNextCommand(nextFloors))
     nextFloors = MutableList()
 
     cabins.map(e => e.nextCommand()).mkString("\n")
