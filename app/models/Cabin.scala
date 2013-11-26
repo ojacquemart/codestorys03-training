@@ -1,7 +1,6 @@
 package models
 
 import play.api.Logger
-import scala.collection.mutable
 
 case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, val size: Int) {
   val users = new Users(size)
@@ -29,8 +28,13 @@ case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, 
     users.canStopAt(floor, to)
   }
 
-  def beforeNextCommand(nextFloors: mutable.MutableList[NextFloor]) = {
-    users.onNextCommand(floor, nextFloors)
+  def flagNextFloor(nextFloor: NextFloor) {
+    users.flagNextToFloorToDefine(floor)
+    users.goToFloor(nextFloor)
+  }
+
+  def onNextCommand() = {
+    users.onNextCommand(floor)
   }
   
   def nextCommand() = {

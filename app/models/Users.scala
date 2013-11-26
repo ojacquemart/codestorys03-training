@@ -113,8 +113,7 @@ class Users(var maxTravelers: Int = 30) extends Reset {
     nbWaitersAtInDirection > 0
   }
 
-  def onNextCommand(floor: Int, nextFloors: MutableList[NextFloor]) = {
-//    updateNextFloorsToGo(floor, nextFloors)
+  def onNextCommand(floor: Int) = {
     tick(floor)
     removeDone()
   }
