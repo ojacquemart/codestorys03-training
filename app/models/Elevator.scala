@@ -13,7 +13,7 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
     i => new Cabin(i, lowerFloor, higherFloor, cabinSize)
   }
 
-  var nextFloors = MutableList[NextFloor]()
+//  var nextFloors = MutableList[NextFloor]()
 
   // visible for test
   def callAndGo(atFloor: Int, toFloor: Int, cabin: Int, direction: Direction = UP) = {
@@ -28,15 +28,19 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   def userHasEntered {}
 
   def go(cabin: Int, toFloor: Int) {
-    nextFloors += NextFloor(toFloor, cabin)
+    cabins.foreach(c => {
+      c.users.flagNextToFloorToDefine(c.floor)
+      c.users.goToFloor(NextFloor(toFloor, cabin))
+    })
+//    nextFloors += NextFloor(toFloor, cabin)
   }
 
   def onUserExited {}
 
   def nextCommands(): String = {
     hits += 1
-    cabins.foreach(c => c.beforeNextCommand(nextFloors))
-    nextFloors = MutableList()
+    cabins.foreach(c => c.beforeNextCommand(MutableList[NextFloor]()))
+//    nextFloors = MutableList()
 
     cabins.map(e => e.nextCommand()).mkString("\n")
   }
