@@ -27,7 +27,7 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
 
   def userHasEntered {}
 
-  def go(toFloor: Int, cabin: Int) {
+  def go(cabin: Int, toFloor: Int) {
     nextFloors += NextFloor(toFloor, cabin)
   }
 
@@ -43,6 +43,11 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
 
   def getStatus: String = Json.toJson(ElevatorRecap.get(this)).toString
 
+}
+
+object Elevator {
+
+  def empty() = new Elevator(0, 0, 0, 0)
 }
 
 

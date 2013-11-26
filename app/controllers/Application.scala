@@ -11,7 +11,7 @@ import scala.collection.mutable.MutableList
 object Application extends Controller {
 
   var lastResets = MutableList[SimpleReset]()
-  var elevator = Elevator(lowerFloor = 0, higherFloor = 42, cabinSize = 10, cabinCount = 2)
+  var elevator = Elevator.empty()
 
   def reset(lowerFloor: Int, higherFloor: Int, cabinSize: Int, cabinCount: Int, cause: String) = Action {
     Logger.info(s"""@@@ RESET
