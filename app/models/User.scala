@@ -1,6 +1,7 @@
 package models
 
 import math._
+import play.api.Logger
 
 object UserState  extends Enumeration {
   val WAITING, TRAVELING, DONE = Value
@@ -27,6 +28,8 @@ case class User(fromFloor: Int, var toFloor: Int = -1, var cabin: Int = 0, direc
   def isNextToFloorStateToNextToDefine = toFloorState == NEXT_TO_DEFINE
 
   def setupToFloor(nextFloor: NextFloor) = {
+    Logger.debug("@@@ Set up floor to go" + nextFloor)
+
     this.toFloor = nextFloor.floor
     this.cabin = nextFloor.cabin
     setToFloorStateToDefined

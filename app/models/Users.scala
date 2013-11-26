@@ -25,17 +25,6 @@ class Users(var maxTravelers: Int = 30) extends Reset {
     users += user
   }
 
-  /**
-   * Update the toFloor for users who were waiting and just entered in the cabin.
-   */
-  def updateNextFloorsToGo(floor: Int, nextFloorsToGo: MutableList[NextFloor]) = {
-    Logger.debug(s"@@@ Add next floors... $nextFloorsToGo")
-    nextFloorsToGo.foreach(nextFloor => {
-      flagNextToFloorToDefine(floor, nextFloor.cabin)
-      goToFloor(nextFloor)
-    })
-  }
-
   def travelersSize = users.count(_.isTraveling())
 
   def travelers = users.filter(_.isTraveling())
@@ -49,9 +38,9 @@ class Users(var maxTravelers: Int = 30) extends Reset {
   def donerScores: Int = doners.map(_.score()).sum
 
   // When user has entered
-  def flagNextToFloorToDefine(floor: Int, cabin: Int) = {
+  def flagNextToFloorToDefine(floor: Int) = {
     users
-      .find(u => u.cabin == cabin && u.fromFloor == floor && u.isToFloorStateUndefined)
+      .find(u => u.fromFloor == floor && u.isToFloorStateUndefined)
       .map(_.setToFloorStateToNextToDefine)
   }
 
@@ -128,6 +117,17 @@ class Users(var maxTravelers: Int = 30) extends Reset {
     updateNextFloorsToGo(floor, nextFloors)
     tick(floor)
     removeDone()
+  }
+
+  /**
+   * Update the toFloor for users who were waiting and just entered in the cabin.
+   */
+  def updateNextFloorsToGo(floor: Int, nextFloorsToGo: MutableList[NextFloor]) = {
+    Logger.debug(s"@@@ Add next floors... $nextFloorsToGo")
+    nextFloorsToGo.foreach(nextFloor => {
+      flagNextToFloorToDefine(floor)
+      goToFloor(nextFloor)
+    })
   }
 
   def tick(floor: Int) = users.foreach(_.tick(floor))
