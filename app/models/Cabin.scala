@@ -7,7 +7,7 @@ case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, 
   val users = new Users(size)
   val strategy = new OpenCloseStrategy()
 
-  var floor = -1
+  var floor = 0
   def middleFloor = ((lowerFloor + higherFloor) / 2) + 1
 
   var direction: Direction = UP
