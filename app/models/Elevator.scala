@@ -18,7 +18,8 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   }
 
   def call(atFloor: Int, direction: Direction) {
-    cabins.foreach(c => c.users.add(atFloor, direction))
+    val nearestCabin = cabins.minBy(c => Math.abs(c.floor - atFloor))
+    nearestCabin.users.add(atFloor, direction)
   }
 
   def userHasEntered {}
