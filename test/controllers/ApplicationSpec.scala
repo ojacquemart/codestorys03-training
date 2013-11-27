@@ -31,7 +31,6 @@ class ApplicationSpec extends Specification {
     def assertNextsCommands(cabinCount: Int) = {
       val result = assert200("/nextCommands")
       val commands = contentAsString(result).split("\n")
-      commands.forall(_ == "UP") must beTrue
       commands.size must be equalTo(cabinCount)
     }
 

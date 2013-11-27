@@ -8,8 +8,8 @@ object CabinSpec extends Specification {
   val MaxCabinSize = 100
   var cabin = new Cabin(index = 0, lowerFloor = 0, higherFloor = MaxFloor, size = MaxCabinSize)
 
-  def resetCabin(lowerFloor: Int, higherFloor: Int = MaxFloor) = {
-    val cabin = new Cabin(0, lowerFloor, higherFloor, MaxCabinSize)
+  def resetCabin(lowerFloor: Int, higherFloor: Int = MaxFloor, index: Int = 0) = {
+    val cabin = new Cabin(index, lowerFloor, higherFloor, MaxCabinSize)
     cabin.floor = lowerFloor
     cabin
   }
@@ -55,11 +55,15 @@ object CabinSpec extends Specification {
     "check if is at the middle floor" in {
       cabin = resetCabin(0)
       cabin.isAtMiddle must beFalse
-      cabin.floor = 10
+      cabin.floor = 9
       cabin.isAtMiddle must beTrue
 
-      cabin = resetCabin(-13, 27)
-      cabin.floor = 8
+      cabin = resetCabin(-13, 27, index = 0)
+      cabin.floor = 13
+      cabin.isAtMiddle must beTrue
+
+      cabin = resetCabin(-13, 27, index = 1)
+      cabin.floor = 6
       cabin.isAtMiddle must beTrue
     }
 
@@ -94,7 +98,7 @@ object CabinSpec extends Specification {
 
     "can do nothing when at middle floor" in {
       cabin = resetCabin(0)
-      cabin.floor = 10
+      cabin.floor = 9
       cabin.canDoNothing() must beTrue
     }
 

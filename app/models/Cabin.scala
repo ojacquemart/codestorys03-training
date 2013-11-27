@@ -7,7 +7,7 @@ case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, 
   val strategy = new OpenCloseStrategy()
 
   var floor = 0
-  def middleFloor = ((lowerFloor + higherFloor) / 2) + 1
+  val middleFloor = if (index % 2 == 0) higherFloor / 2 else (Math.abs(lowerFloor) / 2)
 
   var direction: Direction = UP
   var door = Door.CLOSE
