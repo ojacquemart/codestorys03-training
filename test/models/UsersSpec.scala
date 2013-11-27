@@ -78,13 +78,13 @@ object UsersSpec extends Specification {
 
     "stop when has travelers or waiters in a direction at a floor" in {
       val users = usersWithTravelersAndWaiters
-      users.canStopAt(0, UP) must beTrue // traveler
-      users.canStopAt(2, UP) must beTrue // traveler
-      users.canStopAt(5, UP) must beTrue // traveler
-      users.canStopAt(3, UP) must beTrue // waiter in same direction
-      users.canStopAt(4, UP) must beFalse // waiter in inverse direction
-      users.canStopAt(15, DOWN) must beTrue // waiter is in same direction
-      users.canStopAt(19, UP) must beFalse // no one
+      users.canStopAt(0, 0, UP) must beTrue // traveler
+      users.canStopAt(0, 2, UP) must beTrue // traveler
+      users.canStopAt(0, 5, UP) must beTrue // traveler
+      users.canStopAt(0, 3, UP) must beTrue // waiter in same direction
+      users.canStopAt(0, 4, UP) must beFalse // waiter in inverse direction
+      users.canStopAt(0, 15, DOWN) must beTrue // waiter is in same direction
+      users.canStopAt(0, 19, UP) must beFalse // no one
     }
 
     /**
@@ -103,10 +103,10 @@ object UsersSpec extends Specification {
 
     "stop when only waiters and no travelers" in {
       val users = usersWithOnlyWaiters
-      users.canStopAt(2, UP) must beTrue
-      users.canStopAt(2, DOWN) must beTrue
-      users.canStopAt(15, UP) must beTrue
-      users.canStopAt(19, DOWN) must beFalse // no one
+      users.canStopAt(0, 2, UP) must beTrue
+      users.canStopAt(0, 2, DOWN) must beTrue
+      users.canStopAt(0, 15, UP) must beTrue
+      users.canStopAt(0, 19, DOWN) must beFalse // no one
     }
 
     def usersWithOnlyLosers = {
@@ -124,11 +124,11 @@ object UsersSpec extends Specification {
     "stop when only travelers with score at 0" in {
       val users = usersWithOnlyLosers
 
-      users.canStopAt(0, UP) must beFalse // no one
-      users.canStopAt(17, UP) must beFalse // no one
+      users.canStopAt(0, 0, UP) must beFalse // no one
+      users.canStopAt(0, 17, UP) must beFalse // no one
 
       // All users does not give points
-      users.users.forall(u => users.canStopAt(u.toFloor, UP) must beTrue)
+      users.users.forall(u => users.canStopAt(0, u.toFloor, UP) must beTrue)
     }
 
     def  usersWithOnlyTravelersAtFloor10AndMaxTravelersTo10 = {
@@ -144,10 +144,10 @@ object UsersSpec extends Specification {
       users.remainsPlaceForNewTravelers() must beFalse
 
       users.add(11, UP) // waiter at 11
-      users.canStopAt(12, UP) must beFalse // waiter can't enter, cabin is full!
-      users.canStopAt(9, UP) must beTrue // traveler at 9
-      users.canStopAt(0, UP) must beTrue // traveler at 0
-      users.canStopAt(19, UP) must beFalse // no one at 19
+      users.canStopAt(0, 12, UP) must beFalse // waiter can't enter, cabin is full!
+      users.canStopAt(0, 9, UP) must beTrue // traveler at 9
+      users.canStopAt(0, 0, UP) must beTrue // traveler at 0
+      users.canStopAt(0, 19, UP) must beFalse // no one at 19
     }
 
     "remove done users" in {

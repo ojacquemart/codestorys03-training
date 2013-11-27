@@ -25,7 +25,7 @@ case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, 
   def isEmpty() = users.size == 0
 
   def canStopAt(floor: Int, to: Direction): Boolean = {
-    users.canStopAt(floor, to)
+    users.canStopAt(index, floor, to)
   }
 
   def flagNextFloor(nextFloor: NextFloor) {
@@ -42,9 +42,9 @@ case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, 
   }
 
   def canStop() = {
-    val canStop = users.canStopAt(floor, direction)
+    val canStop = users.canStopAt(index, floor, direction)
     if (canStop) {
-      Logger.debug("Stop travelers and update points")
+      Logger("CABIN").debug("Stop travelers and update points")
       users.stopTravelersAt(floor)
     }
     canStop

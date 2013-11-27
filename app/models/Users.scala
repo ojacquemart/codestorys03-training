@@ -4,6 +4,8 @@ import scala.collection.mutable.MutableList
 
 import play.api.Logger
 
+case class StopAt(cabin: Int, floor: Int, to: Direction)
+
 class Users(var maxTravelers: Int = 30) extends Reset {
 
   var users: MutableList[User] = emptyMutableUsers
@@ -57,33 +59,33 @@ class Users(var maxTravelers: Int = 30) extends Reset {
   }
 
   // Check if can stop at floor and direction for user
-  def canStopAt(floor: Int, to: Direction): Boolean = {
-    Logger.debug(s"Max cabin size = $maxTravelers")
+  def canStopAt(cabin: Int, floor: Int, to: Direction): Boolean = {
+    Logger("USERS").debug(s"CABIN $cabin - Max cabin size = $maxTravelers")
 
     if (hasNoTravelers()) {
       val waitersAt = hasWaitersAt(floor)
-      Logger.debug(s"No travelers, waiters are at $floor: $waitersAt")
+      Logger("USERS").debug(s"CABIN $cabin - No travelers, waiters are at $floor: $waitersAt")
       waitersAt
-    } else if (canStopForTravelersOrWaitersAt(floor, to)) true
+    } else if (canStopForTravelersOrWaitersAt(cabin, floor, to)) true
     else {
       val canStopForLoserAt = hasTravelersAtAndLosing(floor)
-      Logger.debug(s"Only losers traveling are at $floor to $to: $canStopForLoserAt")
+      Logger("USERS").debug(s"CABIN $cabin - Only losers traveling are at $floor to $to: $canStopForLoserAt")
       canStopForLoserAt
     }
   }
 
   def hasWaitersAt(floor: Int) = users.count(_.isWaitingAt(floor)) > 0
 
-  def canStopForTravelersOrWaitersAt(floor: Int, to: Direction) = {
-    val canStop = hasTravelersAt(floor) || canStopForWaitersAt(floor, to)
-    Logger.debug(s"\tCan stop for traveler or waiter at $floor in direction $to: $canStop")
+  def canStopForTravelersOrWaitersAt(cabin: Int, floor: Int, to: Direction) = {
+    val canStop = hasTravelersAt(floor) || canStopForWaitersAt(cabin, floor, to)
+    Logger("USERS").debug(s"\tCABIN $cabin -Can stop for traveler or waiter at $floor in direction $to: $canStop")
 
     canStop
   }
 
-  def canStopForWaitersAt(floor: Int, to: Direction) = {
-    val canStopForWaiters = hasWaitersAtInDirection(floor, to) && remainsPlaceForNewTravelers()
-    Logger.debug(s"Can stop for waiters at $floor to $to: $canStopForWaiters")
+  def canStopForWaitersAt(cabin: Int, floor: Int, to: Direction) = {
+    val canStopForWaiters = hasWaitersAtInDirection(cabin, floor, to) && remainsPlaceForNewTravelers()
+    Logger("USERS").debug(s"CABIN $cabin - an stop for waiters at $floor to $to: $canStopForWaiters")
 
     canStopForWaiters
   }
@@ -92,24 +94,23 @@ class Users(var maxTravelers: Int = 30) extends Reset {
 
   def remainsPlaceForNewTravelers(): Boolean = {
     val remainsPlace = travelersSize < maxTravelers
-    Logger.debug(s"Remains place for new travelers: $remainsPlace")
+    Logger("USERS").debug(s"Remains place for new travelers: $remainsPlace")
 
     remainsPlace
   }
 
-  // TODO: use isTravelingAtAndScoring to improve score when a large number of users.
   def hasTravelersAt(floor: Int): Boolean = {
     val nbTravelersAt = users.count(_.isTravelingAt(floor))
-    Logger.debug(s"$nbTravelersAt travelers at $floor")
+    Logger("USERS").debug(s"$nbTravelersAt travelers at $floor")
 
     nbTravelersAt > 0
   }
   def hasNoTravelers() = users.count(_.isTraveling()) == 0
 
 
-  def hasWaitersAtInDirection(floor: Int, to: Direction): Boolean = {
+  def hasWaitersAtInDirection(cabin: Int, floor: Int, to: Direction): Boolean = {
     val nbWaitersAtInDirection = users.count(_.isWaitingAtInDirection(floor, to))
-    Logger.debug(s"Has waiters at $floor to $to: $nbWaitersAtInDirection")
+    Logger("USERS").debug(s"Has waiters at $floor to $to: $nbWaitersAtInDirection")
 
     nbWaitersAtInDirection > 0
   }
@@ -117,17 +118,6 @@ class Users(var maxTravelers: Int = 30) extends Reset {
   def onNextCommand(floor: Int) = {
     tick(floor)
     removeDone()
-  }
-
-  /**
-   * Update the toFloor for users who were waiting and just entered in the cabin.
-   */
-  def updateNextFloorsToGo(floor: Int, nextFloorsToGo: MutableList[NextFloor]) = {
-    Logger.debug(s"@@@ Add next floors... $nextFloorsToGo")
-    nextFloorsToGo.foreach(nextFloor => {
-      flagNextToFloorToDefine(floor)
-      goToFloor(nextFloor)
-    })
   }
 
   def tick(floor: Int) = users.foreach(_.tick(floor))
@@ -138,8 +128,8 @@ class Users(var maxTravelers: Int = 30) extends Reset {
     val (travelersInDirection, travelersInInverseDirection) =
       users.filter(_.isTraveling()).partition(u => u.directionFromToFloorByFloor(floor) == to)
 
-    Logger.debug(s"Travelers in direction: ${travelersInDirection.size}")
-    Logger.debug(s"Travelers in inverse direction: ${travelersInInverseDirection.size}")
+    Logger("USERS").debug(s"Travelers in direction: ${travelersInDirection.size}")
+    Logger("USERS").debug(s"Travelers in inverse direction: ${travelersInInverseDirection.size}")
 
     if (travelersInDirection.size > 0) NextDirectionType.SAME_AS_CURRENT
     else if (travelersInInverseDirection.size > 0) NextDirectionType.INVERSE
@@ -149,7 +139,7 @@ class Users(var maxTravelers: Int = 30) extends Reset {
   def getDirectionTypeForWaiters(floor: Int, to: Direction) = {
     val waiters = users.filter(_.isWaiting())
     if (waiters.size == 0) {
-      Logger.debug("No waiters, force direction to middle floor")
+      Logger("USERS").debug("No waiters, force direction to middle floor")
       NextDirectionType.TO_MIDDLE_FLOOR
     }
     else {
@@ -157,9 +147,9 @@ class Users(var maxTravelers: Int = 30) extends Reset {
         .sortBy(w => w.fromFloor + w.waitingTime)
         .minBy(waiter => Math.abs(floor - waiter.fromFloor))
 
-      Logger.debug(s"Lets go the first waiter: $nearestWaiter")
+      Logger("USERS").debug(s"Lets go the first waiter: $nearestWaiter")
       val directionToWaiter = nearestWaiter.needsToGoUpFromFloorToFloor(floor)
-      Logger.debug(s"\tNeeds to go up $directionToWaiter from $floor to ${nearestWaiter.fromFloor}")
+      Logger("USERS").debug(s"\tNeeds to go up $directionToWaiter from $floor to ${nearestWaiter.fromFloor}")
 
       if (directionToWaiter) NextDirectionType.TO_UP else NextDirectionType.TO_DOWN
     }

@@ -26,13 +26,13 @@ class DirectionStrategy extends Strategy {
   def nextCommand(cabin: Cabin): String = {
     val needsToInverseDirection = cabin.needsToInverseDirection()
     if (needsToInverseDirection) {
-      Logger.debug("At top or bottom floor => inverse the direction")
+      Logger.debug(s"CABIN ${cabin.index} - At top or bottom floor => inverse the direction")
       val direction = if (needsToInverseDirection) cabin.direction.inverse else cabin.direction
 
       fromDirection(direction).to(cabin)
     }
     else if (cabin.canDoNothing()) {
-      Logger.debug("Can do nothing because no stops & at the middle floor!")
+      Logger.debug(s"CABIN ${cabin.index} - Can do nothing because no stops & at the middle floor!")
       NothingCommand.to(cabin)
     }
     else {
@@ -46,20 +46,20 @@ class DirectionStrategy extends Strategy {
     else findBestDirectionByCurrentDirection(elevator)
   }
 
-  def forceDirectionToMiddleFloor(elevator: Cabin): Direction = {
-    Logger.debug("No stop, force replacement to the middle floor")
-    if (elevator.floor < elevator.middleFloor) UP
+  def forceDirectionToMiddleFloor(cabin: Cabin): Direction = {
+    Logger.debug(s"CABIN ${cabin.index} - No stop, force replacement to the middle floor")
+    if (cabin.floor < cabin.middleFloor) UP
     else DOWN
   }
 
-  def findBestDirectionByCurrentDirection(elevator: Cabin): Direction = {
-    val direction = elevator.direction
-    Logger.debug(s"Look if has stop in current direction: $direction")
+  def findBestDirectionByCurrentDirection(cabin: Cabin): Direction = {
+    val direction = cabin.direction
+    Logger.debug(s"CABIN ${cabin.index} - Look if has stop in current direction: $direction")
 
-    elevator.getDirectionTypeForTravelers() match {
+    cabin.getDirectionTypeForTravelers() match {
       case NextDirectionType.SAME_AS_CURRENT => direction
       case NextDirectionType.INVERSE => direction.inverse
-      case _ => findDirectionByWaiters(elevator)
+      case _ => findDirectionByWaiters(cabin)
     }
   }
 
