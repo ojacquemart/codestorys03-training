@@ -10,6 +10,7 @@ class Users(var maxTravelers: Int = 30) extends Reset {
 
   def emptyMutableUsers = MutableList[User]()
 
+  def isEmpty = size == 0
   def size = users.size
 
   // for testing

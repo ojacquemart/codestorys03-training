@@ -18,8 +18,14 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   }
 
   def call(atFloor: Int, direction: Direction) {
-    val nearestCabin = cabins.minBy(c => Math.abs(c.floor - atFloor))
-    nearestCabin.users.add(atFloor, direction)
+    val (emptyCabins, nonEmptyCabins) = cabins.partition(_.users.isEmpty)
+    if (emptyCabins.size > 0) neareastCabin(emptyCabins, atFloor, direction)
+    else neareastCabin(nonEmptyCabins, atFloor, direction)
+  }
+
+  def neareastCabin(cabins: List[Cabin], floor: Int, to: Direction) = {
+    val nearestCabin = cabins.minBy(c => Math.abs(c.floor - floor))
+    nearestCabin.users.add(floor, to)
   }
 
   def userHasEntered {}
