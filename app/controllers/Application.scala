@@ -39,7 +39,7 @@ object Application extends Controller {
 
   def userHasEntered(cabin: Int) = Action {
     Logger.info(s"@@@ USER ENTERED IN $cabin")
-    elevator.userHasEntered
+    elevator.userHasEntered(cabin)
 
     Ok
   }
@@ -53,7 +53,7 @@ object Application extends Controller {
 
   def nextCommands = Action {
     val nextCommands = elevator.nextCommands()
-    Logger.info(s"@@@ NEXT COMMANDS: $nextCommands")
+    Logger.info(s"@@@ NEXT COMMANDS: ${nextCommands}")
     Logger.info(s"@@@ NEXT COMMAND, debug: ${elevator.getStatus}")
 
     Ok(nextCommands)

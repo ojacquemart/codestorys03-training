@@ -41,9 +41,9 @@ class DirectionStrategy extends Strategy {
     }
   }
 
-  def findBestDirection(elevator: Cabin) = {
-    if (elevator.isEmpty()) forceDirectionToMiddleFloor(elevator)
-    else findBestDirectionByCurrentDirection(elevator)
+  def findBestDirection(cabin: Cabin) = {
+    if (cabin.isEmpty()) forceDirectionToMiddleFloor(cabin)
+    else findBestDirectionByCurrentDirection(cabin)
   }
 
   def forceDirectionToMiddleFloor(cabin: Cabin): Direction = {
@@ -63,11 +63,11 @@ class DirectionStrategy extends Strategy {
     }
   }
 
-  def findDirectionByWaiters(elevator: Cabin): Direction = {
-    elevator.getDirectionTypeForWaiters() match {
+  def findDirectionByWaiters(cabin: Cabin): Direction = {
+    cabin.getDirectionTypeForWaiters() match {
       case NextDirectionType.TO_UP => UP
       case NextDirectionType.TO_DOWN => DOWN
-      case _ => forceDirectionToMiddleFloor(elevator)
+      case _ => forceDirectionToMiddleFloor(cabin)
     }
   }
 

@@ -26,12 +26,12 @@ object CabinSpec extends Specification {
       cabin.direction = DOWN
       cabin.floor = 1
       cabin.door = Door.OPEN
-      cabin.users.add(1, DOWN)
+      cabin.travelers.addWaiter(1, DOWN)
 
       cabin = resetCabin(0)
 
       cabin.floor should be equalTo (0)
-      cabin.users.size must be equalTo(0)
+      cabin.travelers.size must be equalTo(0)
       cabin.direction should be equalTo (UP)
       cabin.door must be equalTo(Door.CLOSE)
     }

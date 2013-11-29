@@ -60,11 +60,11 @@ case class UsersStatus(
 object UsersStatus {
   def get(cabin: Cabin) = {
     new UsersStatus(
-      cabin.users.size,
-      cabin.users.waitersSize,
-      cabin.users.travelersSize,
-      cabin.users.waitersByFloor,
-      cabin.users.travelersByFloor
+      cabin.size,
+      cabin.waiters.size,
+      cabin.travelers.size,
+      cabin.waitersByFloor,
+      cabin.travelersByFloor
     )
   }
 }

@@ -18,20 +18,25 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   }
 
   def call(atFloor: Int, direction: Direction) {
-    val (emptyCabins, nonEmptyCabins) = cabins.partition(_.users.isEmpty)
-    if (emptyCabins.size > 0) nearestCabin(emptyCabins, atFloor, direction)
-    else nearestCabin(nonEmptyCabins, atFloor, direction)
+    val (emptyCabins, nonEmptyCabins) = cabins.partition(_.travelers.isEmpty)
+    if (emptyCabins.size > 0) addWaiterToNearestCabin(emptyCabins, atFloor, direction)
+    else addWaiterToNearestCabin(nonEmptyCabins, atFloor, direction)
   }
 
-  def nearestCabin(cabins: List[Cabin], floor: Int, to: Direction) = {
+  def addWaiterToNearestCabin(cabins: List[Cabin], floor: Int, to: Direction) = {
     val nearestCabin = cabins.minBy(c => Math.abs(c.floor - floor))
-    nearestCabin.users.add(floor, to)
+    nearestCabin.waiters.addWaiter(floor, to)
   }
 
-  def userHasEntered {}
+  def userHasEntered(cabinIndex: Int) = {
+    val cabin = cabins(cabinIndex)
+    val maybeWaiter = cabin.waiters.users.find(w => w.fromFloor == cabin.floor)
+    if (maybeWaiter.isDefined) cabin.waiters.users -= maybeWaiter.get
+  }
 
-  def go(cabin: Int, toFloor: Int) {
-    cabins.foreach(_.flagNextFloor(NextFloor(toFloor, cabin)))
+  def go(cabinIndex: Int, toFloor: Int) {
+    val cabin = cabins(cabinIndex)
+    cabin.travelers.addTraveler(cabin.floor, toFloor)
   }
 
   def onUserExited {}
@@ -40,7 +45,7 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
     hits += 1
     cabins.foreach(_.onNextCommand())
 
-    cabins.map(e => e.nextCommand()).mkString("\n")
+    cabins.map(c => c.nextCommand()).mkString("\n")
   }
 
   def getStatus: String = Json.toJson(ElevatorRecap.get(this)).toString
@@ -51,5 +56,3 @@ object Elevator {
 
   def empty() = new Elevator(0, 0, 0, 0)
 }
-
-

@@ -12,9 +12,9 @@ object UsersSpec extends Specification {
 
     def threeUsers = {
       val users = new Users()
-      users.add(0, UP)
-      users.add(0, DOWN)
-      users.add(10, DOWN)
+      users.addWaiter(0, UP)
+      users.addWaiter(0, DOWN)
+      users.addWaiter(10, DOWN)
 
       users
     }
@@ -35,9 +35,9 @@ object UsersSpec extends Specification {
 
     "flag next floor and go the toFloor" in {
       val users = new Users()
-      users.add(0, UP) // go to 5
-      users.add(2, DOWN) // go to 0
-      users.add(2, UP) // go to 19
+      users.addWaiter(0, UP) // go to 5
+      users.addWaiter(2, DOWN) // go to 0
+      users.addWaiter(2, UP) // go to 19
 
       // 0 to 5
       users.flagNextToFloorToDefine(0)
@@ -143,7 +143,7 @@ object UsersSpec extends Specification {
       users.travelersSize must be equalTo(10)
       users.remainsPlaceForNewTravelers() must beFalse
 
-      users.add(11, UP) // waiter at 11
+      users.addWaiter(11, UP) // waiter at 11
       users.canStopAt(0, 12, UP) must beFalse // waiter can't enter, cabin is full!
       users.canStopAt(0, 9, UP) must beTrue // traveler at 9
       users.canStopAt(0, 0, UP) must beTrue // traveler at 0
@@ -152,9 +152,9 @@ object UsersSpec extends Specification {
 
     "remove done users" in {
       val users = new Users()
-      users.add(0, UP)
-      users.add(0, DOWN)
-      users.add(10, DOWN)
+      users.addWaiter(0, UP)
+      users.addWaiter(0, DOWN)
+      users.addWaiter(10, DOWN)
 
       users.size must be equalTo(3)
       users.users.foreach(_.state = UserState.DONE)
