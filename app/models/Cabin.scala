@@ -48,7 +48,7 @@ case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, 
       // More than one waiter at the floor, just take the first in the current direction
       val waitersAtFloorInCurrentDirection = waitersAtFloor.filter(_.direction == direction)
       if (waitersAtFloorInCurrentDirection.size > 0) {
-        removeMaybeWaiter(waitersAtFloor.find(_.direction == direction))
+        removeMaybeWaiter(waitersAtFloorInCurrentDirection.find(_.direction == direction))
       } else {
         removeMaybeWaiter(waitersAtFloor.find(_.fromFloor == floor))
       }
