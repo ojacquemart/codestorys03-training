@@ -14,49 +14,60 @@ object Application extends Controller {
   var elevator = Elevator.empty()
 
   def reset(lowerFloor: Int, higherFloor: Int, cabinSize: Int, cabinCount: Int, cause: String) = Action {
-    Logger.info(s"""@@@ RESET
+    this.synchronized {
+      Logger.info(s"""@@@ RESET
            Reset lower=$lowerFloor, higher=$higherFloor, cabinSize=$cabinSize, cabinCount=$cabinCount cause='$cause'""")
-    lastResets += SimpleReset(cause, ElevatorStatus.get(elevator))
+      lastResets += SimpleReset(cause, ElevatorStatus.get(elevator))
 
-    elevator = Elevator(lowerFloor, higherFloor, cabinSize, cabinCount)
+      elevator = Elevator(lowerFloor, higherFloor, cabinSize, cabinCount)
 
-    Ok
+      Ok
+    }
   }
 
   def call(atFloor: Int, to: String) = Action {
-    Logger.info(s"@@@ CALL $atFloor direction $to")
-    elevator.call(atFloor, Directions.valueOf(to))
-
-    Ok
+    this.synchronized {
+      Logger.info(s"@@@ CALL $atFloor direction $to")
+      elevator.call(atFloor, Directions.valueOf(to))
+      Ok
+    }
   }
 
   def go(cabin: Int, floorToGo: Int) = Action {
-    Logger.info(s"@@@ GO IN CABIN $cabin TO $floorToGo")
-    elevator.go(cabin, floorToGo)
+    this.synchronized {
+      Logger.info(s"@@@ GO IN CABIN $cabin TO $floorToGo")
+      elevator.go(cabin, floorToGo)
 
-    Ok
+      Ok
+    }
   }
 
   def userHasEntered(cabin: Int) = Action {
-    Logger.info(s"@@@ USER ENTERED IN $cabin")
-    elevator.userHasEntered(cabin)
+    this.synchronized {
+      Logger.info(s"@@@ USER ENTERED IN $cabin")
+      elevator.userHasEntered(cabin)
+      Ok
+    }
 
-    Ok
   }
 
   def userHasExited(cabin: Int) = Action {
-    Logger.info(s"@@@ USER EXITED FROM $cabin")
-    elevator.onUserExited
+      this.synchronized {
+      Logger.info(s"@@@ USER EXITED FROM $cabin")
+      elevator.onUserExited
 
-    Ok
+      Ok
+    }
   }
 
   def nextCommands = Action {
-    val nextCommands = elevator.nextCommands()
-    Logger.info(s"@@@ NEXT COMMANDS: ${nextCommands}")
-    Logger.info(s"@@@ NEXT COMMAND, debug: ${elevator.getStatus}")
+    this.synchronized {
+      val nextCommands = elevator.nextCommands()
+      Logger.info(s"@@@ NEXT COMMANDS: ${nextCommands}")
+      Logger.info(s"@@@ NEXT COMMAND, debug: ${elevator.getStatus}")
 
-    Ok(nextCommands)
+      Ok(nextCommands)
+    }
   }
 
   def status = Action {

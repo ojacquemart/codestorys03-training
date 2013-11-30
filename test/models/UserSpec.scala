@@ -22,15 +22,6 @@ object UserSpec extends Specification {
       user.isDone should beTrue
     }
 
-    "change toFloor state" in {
-      val user = newUser
-      user.isToFloorStateUndefined must beTrue
-      user.setToFloorStateToNextToDefine
-      user.isNextToFloorStateToNextToDefine must beTrue
-      user.setToFloorStateToDefined
-      user.toFloorState must be equalTo(ToFloorState.DEFINED)
-    }
-
     def newWaiter = {
       val user = newUser
       user.state = UserState.WAITING

@@ -1,40 +1,18 @@
 package models
 
 import math._
-import play.api.Logger
 
 object UserState  extends Enumeration {
   val WAITING, TRAVELING, DONE = Value
 }
 
-object ToFloorState  extends Enumeration {
-  val UNDEFINED, NEXT_TO_DEFINE, DEFINED = Value
-}
-
 case class User(fromFloor: Int, var toFloor: Int = -1, var cabin: Int = 0, direction: Direction = UP) {
 
   import UserState._
-  import ToFloorState._
 
   var state = WAITING
   var waitingTime = 0
   var travelingTime = 0
-
-  var toFloorState = UNDEFINED
-
-  def isToFloorStateUndefined = toFloorState == UNDEFINED
-  def setToFloorStateToNextToDefine = toFloorState = NEXT_TO_DEFINE
-  def setToFloorStateToDefined = toFloorState = DEFINED
-  def isNextToFloorStateToNextToDefine = toFloorState == NEXT_TO_DEFINE
-
-  def setupToFloor(nextFloor: NextFloor) = {
-    Logger.debug("@@@ Set up floor to go" + nextFloor)
-
-    this.toFloor = nextFloor.floor
-    this.cabin = nextFloor.cabin
-    setToFloorStateToDefined
-    travel()
-  }
 
   def stopTravelAt(floor: Int) {
     if (isTravelingAt(floor)) {
@@ -56,10 +34,10 @@ case class User(fromFloor: Int, var toFloor: Int = -1, var cabin: Int = 0, direc
 
   def isTravelingAtAndLosing(floor: Int) = isTravelingAt(floor) && score == 0
 
-  def isDone() = state == DONE
-
   def travel() = state = TRAVELING
   def done() = state = DONE
+
+  def isDone() = state == DONE
 
   def needsToGoUpFromFloorToFloor(floor: Int) = floor < fromFloor
   def directionFromToFloorByFloor(floor: Int) = if (floor > toFloor) DOWN else UP

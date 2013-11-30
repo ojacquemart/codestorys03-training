@@ -102,6 +102,60 @@ object CabinSpec extends Specification {
       cabin.canDoNothing() must beTrue
     }
 
+    "dont stop when no waiter or traveler at a floor" in {
+      cabin = resetCabin(0)
+      cabin.canStop must beFalse
+
+      cabin.floor = 10
+      cabin.canStop must beFalse
+    }
+
+    "stop when has travelers or waiters in a direction at a floor" in {
+      cabin = resetCabin(0)
+
+      cabin.travelers.addTraveler(10, 0)
+      cabin.travelers.addTraveler(0, 2)
+      cabin.travelers.addTraveler(1, 5)
+
+      cabin.waiters.addWaiter(3, UP)
+      cabin.waiters.addWaiter(4, DOWN)
+      cabin.waiters.addWaiter(15, DOWN)
+
+      cabin.canStop() must beTrue // traveler exits
+      cabin.floor = 1
+      cabin.canStop() must beFalse // no waiter/traveler
+      cabin.floor = 2
+      cabin.canStop() must beTrue // traveler exits
+      cabin.floor = 3
+      cabin.canStop() must beTrue // waiter enters
+      cabin.floor = 4
+      cabin.canStop() must beFalse // waiter inverse direction
+      cabin.floor = 15
+      cabin.canStop() must beFalse // waiter inverse direction
+
+      cabin.direction = DOWN
+      cabin.canStop() must beTrue // waiter enters in down direction
+    }
+
+    "don't stop when max travelers is reached" in {
+      cabin = resetCabin(0)
+      for (i <- 0 until cabin.size) cabin.travelers.addTraveler(1, 10)
+
+      cabin.travelers.size must be equalTo(cabin.size)
+      cabin.remainsPlaceForNewTravelers() must beFalse
+
+      cabin.waiters.addWaiter(11, UP) // waiter at 11
+
+      cabin.floor = 11
+      cabin.canStop() must beFalse // waiter can't enter, cabin is full!
+      cabin.floor = 10
+      cabin.canStop() must beTrue
+      cabin.travelers.removeDone()
+
+      cabin.floor = 11
+      cabin.canStop() must beTrue
+    }
+
   }
 
 
