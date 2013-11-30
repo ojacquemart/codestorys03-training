@@ -12,16 +12,10 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
     i => new Cabin(i, lowerFloor, higherFloor, cabinSize)
   }
 
-  // visible for test
-  def callAndGo(cabin: Int, atFloor: Int, toFloor: Int, direction: Direction = UP) = {
-    go(cabin, toFloor)
-  }
-
   def call(atFloor: Int, direction: Direction) {
     val organizer = WaitersOrganizer(this)
     organizer.singleOrganize(atFloor, direction)
   }
-
 
   def userHasEntered(cabinIndex: Int): Unit = {
     val cabin = cabins(cabinIndex)
@@ -53,7 +47,6 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   }
 
   def afterNextCommands() = {
-    WaitersOrganizer(this).organize()
   }
 
   def getStatus: String = Json.toJson(ElevatorRecap.get(this)).toString
