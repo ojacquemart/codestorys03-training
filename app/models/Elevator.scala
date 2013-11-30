@@ -47,6 +47,7 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   }
 
   def afterNextCommands() = {
+    WaitersOrganizer(this).organize()
   }
 
   def getStatus: String = Json.toJson(ElevatorRecap.get(this)).toString
