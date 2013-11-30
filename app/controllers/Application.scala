@@ -54,7 +54,7 @@ object Application extends Controller {
   def userHasExited(cabin: Int) = Action {
       this.synchronized {
       Logger.info(s"@@@ USER EXITED FROM $cabin")
-      elevator.onUserExited
+      elevator.userHasExited
 
       Ok
     }

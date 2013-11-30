@@ -2,7 +2,6 @@ package models
 
 import play.api.libs.json.Json
 import play.api.Logger
-import scala.collection.mutable.ArrayBuffer
 
 case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: Int, val cabinCount: Int) {
 
@@ -12,12 +11,10 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   val cabins = (0 until cabinCount).toList.map {
     i => new Cabin(i, lowerFloor, higherFloor, cabinSize)
   }
-  
 
   // visible for test
-  def callAndGo(atFloor: Int, toFloor: Int, cabin: Int, direction: Direction = UP) = {
-    call(atFloor, direction)
-    go(toFloor, cabin)
+  def callAndGo(cabin: Int, atFloor: Int, toFloor: Int, direction: Direction = UP) = {
+    go(cabin, toFloor)
   }
 
   def call(atFloor: Int, direction: Direction) {
@@ -37,7 +34,7 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
     cabin.travelers.addTraveler(cabin.floor, toFloor)
   }
 
-  def onUserExited {}
+  def userHasExited {}
 
   def beforeNextCommands() = {
     hits += 1
@@ -55,7 +52,6 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   def afterNextCommands() = {
     WaitersOrganizer(this).organize()
   }
-
 
   def getStatus: String = Json.toJson(ElevatorRecap.get(this)).toString
 

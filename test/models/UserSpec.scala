@@ -1,6 +1,8 @@
 package models
 
 import org.specs2.mutable.Specification
+import org.specs2.specification.Scope
+import play.api.Logger
 
 object UserSpec extends Specification {
 
@@ -8,13 +10,27 @@ object UserSpec extends Specification {
 
   "User" should {
 
+    class WithUser(fromFloor: Int = 0, toFloor: Int = 5, direction: Direction = UP) extends Scope {
+      val user = User(fromFloor, toFloor, cabin = 0, direction)
+    }
+
+    class WithWaiter extends Scope {
+      val user = newUser
+      user.state = UserState.WAITING
+    }
+
+    class WithTraveler(floor: Int = 0) extends Scope {
+      val user = newUser
+      user.travel()
+      user.toFloor = floor
+    }
+
     /**
      * <li>fromFloor = 0, toFloor = 5, direction = UP
      */
     def newUser = User(fromFloor = 0, toFloor = 5, direction = UP)
 
-    "change state" in {
-      val user = newUser
+    "change state" in new WithUser {
       user.travel()
       user.state must be equalTo(UserState.TRAVELING)
       user.done()
@@ -22,29 +38,14 @@ object UserSpec extends Specification {
       user.isDone should beTrue
     }
 
-    def newWaiter = {
-      val user = newUser
-      user.state = UserState.WAITING
-      user
-    }
-
-    "wait at a floor" in {
-      val user = newWaiter
+    "wait at a floor" in new WithWaiter {
       user.isWaiting() must beTrue
       user.isWaitingAt(2) must beFalse
       user.isWaitingAt(0) must beTrue
     }
 
-    "wait at a floor in same direction" in {
-      val user = newWaiter
+    "wait at a floor in same direction" in new WithWaiter {
       user.isWaitingAtInDirection(0, UP) must beTrue
-    }
-
-    def newTraveler(floor: Int = 0) = {
-      val user = newUser
-      user.travel()
-      user.toFloor = floor
-      user
     }
 
     "travel at a floor" in {
@@ -55,22 +56,21 @@ object UserSpec extends Specification {
       user.isTravelingAt(5) must beTrue
     }
 
-    "travel at a floor gaining points!" in {
-      val user = newTraveler(5)
+    "travel and check if gaining points" in new WithTraveler(5) {
       user.state = UserState.TRAVELING
 
       user.isTravelingAtAndScoring(0) must beFalse
       user.isTravelingAtAndScoring(5) must beTrue
-
-      val lostUser = newTraveler(0)
-      for (i <- 1 to 100) lostUser.tick(i)
-
-      lostUser.isTravelingAt(0) must beTrue
-      lostUser.isTravelingAtAndScoring(0) must beFalse
     }
 
-    "travel at a floor" in {
-      val user = newTraveler(5)
+    "travel and tick a long time to not gaining points" in new WithTraveler(0) {
+      for (i <- 1 to 100) user.tick(i)
+
+      user.isTravelingAt(0) must beTrue
+      user.isTravelingAtAndScoring(0) must beFalse
+    }
+
+    "travel at a floor" in new WithTraveler(5) {
       user.tick(0)
       user.isAt(0) must beTrue
       user.isAt(1) must beFalse
@@ -79,22 +79,19 @@ object UserSpec extends Specification {
       user.isAt(0) must beFalse
     }
 
-    "get direction by a current floor" in {
-      val user = newUser // toFloor is 5
+    "get direction by a current floor" in new WithUser {
       user.directionFromToFloorByFloor(0) must be equalTo(UP)
       user.directionFromToFloorByFloor(6) must be equalTo(DOWN)
     }
 
-    "check if needs to up when waiting" in {
-      val user = new User(fromFloor = 5, toFloor = 7, cabin = 0, direction = UP)
+    "check if needs to up when waiting" in new WithUser(fromFloor = 5, toFloor = 7, direction = UP) {
       user.needsToGoUpFromFloorToFloor(7) must beFalse
       user.needsToGoUpFromFloorToFloor(6) must beFalse
       user.needsToGoUpFromFloorToFloor(5) must beFalse
       user.needsToGoUpFromFloorToFloor(4) must beTrue
     }
 
-    "tick" in {
-      val user = newUser
+    "tick" in new WithUser {
       user.tick(0)
       user.travelingTime must be equalTo(0)
       user.waitingTime must be equalTo(1)
@@ -111,8 +108,7 @@ object UserSpec extends Specification {
       user.waitingTime must be equalTo(2)
     }
 
-    "score" in {
-      val user = newUser
+    "score" in new WithUser {
       // waiting 10 ticks...
       for (i <- 0 until 10) user.tick(i)
 
@@ -123,8 +119,7 @@ object UserSpec extends Specification {
       user.score() must be equalTo(16)
     }
 
-    "score 0 when long waiting and traveling times" in {
-      val user = newUser
+    "score 0 when long waiting and traveling times" in new WithUser {
       tick100times(user)
 
       user.travel()

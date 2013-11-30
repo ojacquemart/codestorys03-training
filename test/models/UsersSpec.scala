@@ -33,7 +33,6 @@ object UsersSpec extends Specification {
       users.size must be equalTo(3)
     }
 
-
     "remove done users" in {
       val users = new Users()
       users.addWaiter(0, UP)

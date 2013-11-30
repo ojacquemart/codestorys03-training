@@ -54,8 +54,8 @@ class Users extends Reset {
     val (travelersInDirection, travelersInInverseDirection) =
       users.filter(_.isTraveling()).partition(u => u.directionFromToFloorByFloor(floor) == to)
 
-    Logger("USERS").debug(s"Travelers in direction: ${travelersInDirection.size}")
-    Logger("USERS").debug(s"Travelers in inverse direction: ${travelersInInverseDirection.size}")
+    Logger.debug(s"Travelers in direction: ${travelersInDirection.size}")
+    Logger.debug(s"Travelers in inverse direction: ${travelersInInverseDirection.size}")
 
     if (travelersInDirection.size > 0) NextDirectionType.SAME_AS_CURRENT
     else if (travelersInInverseDirection.size > 0) NextDirectionType.INVERSE
@@ -73,9 +73,9 @@ class Users extends Reset {
         .sortBy(w => w.fromFloor + w.waitingTime)
         .minBy(waiter => Math.abs(floor - waiter.fromFloor))
 
-      Logger("USERS").debug(s"Lets go the first waiter: $nearestWaiter")
+      Logger.debug(s"Lets go the first waiter: $nearestWaiter")
       val directionToWaiter = nearestWaiter.needsToGoUpFromFloorToFloor(floor)
-      Logger("USERS").debug(s"\tNeeds to go up $directionToWaiter from $floor to ${nearestWaiter.fromFloor}")
+      Logger.debug(s"\tNeeds to go up $directionToWaiter from $floor to ${nearestWaiter.fromFloor}")
 
       if (directionToWaiter) NextDirectionType.TO_UP else NextDirectionType.TO_DOWN
     }

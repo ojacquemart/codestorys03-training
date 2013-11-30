@@ -41,11 +41,11 @@ case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, 
   }
 
   def canStop(): Boolean = {
-    Logger("USERS").debug(s"CABIN $index - Max cabin size = $size")
+    Logger.debug(s"CABIN $index - Max cabin size = $size")
 
     if (travelers.isEmpty) {
       val waitersAt = hasWaitersAt()
-      Logger("USERS").debug(s"CABIN $index - No travelers, waiters are at $floor: $waitersAt")
+      Logger.debug(s"CABIN $index - No travelers, waiters are at $floor: $waitersAt")
       waitersAt
     } else {
       canStopForTravelersOrWaiters()
@@ -59,7 +59,7 @@ case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, 
     val canStop = stopForTravelers || canStopForWaiters()
     if (canStop) {
       if (canStopForTravelers()) {
-        Logger("CABIN").debug("Stop travelers and update points")
+        Logger.debug(s"CABIN $index - Stop travelers and update points")
         travelers.stopTravelersAt(floor)
       }
     }
@@ -68,28 +68,28 @@ case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, 
 
   def canStopForTravelers(): Boolean = {
     val nbTravelersAt = travelers.users.count(_.isTravelingAt(floor))
-    Logger("USERS").debug(s"$nbTravelersAt travelers at $floor")
+    Logger.debug(s"CABIN $index - $nbTravelersAt travelers at $floor")
 
     nbTravelersAt > 0
   }
 
   def canStopForWaiters() = {
     val canStopForWaiters = hasWaitersAtInDirection() && remainsPlaceForNewTravelers()
-    Logger("USERS").debug(s"CABIN $index - an stop for waiters at $floor to $direction: $canStopForWaiters")
+    Logger.debug(s"CABIN $index - an stop for waiters at $floor to $direction: $canStopForWaiters")
 
     canStopForWaiters
   }
 
   def hasWaitersAtInDirection(): Boolean = {
     val nbWaitersAtInDirection = waiters.users.count(_.isWaitingAtInDirection(floor, direction))
-    Logger("USERS").debug(s"Has waiters at $floor to $direction: $nbWaitersAtInDirection")
+    Logger.debug(s"CABIN $index - Has waiters at $floor to $direction: $nbWaitersAtInDirection")
 
     nbWaitersAtInDirection > 0
   }
 
   def remainsPlaceForNewTravelers(): Boolean = {
     val remainsPlace = size > 0 && travelers.size < size
-    Logger("USERS").debug(s"Remains place for new travelers: $remainsPlace")
+    Logger.debug(s"CABIN $index - Remains place for new travelers: $remainsPlace")
 
     remainsPlace
   }
