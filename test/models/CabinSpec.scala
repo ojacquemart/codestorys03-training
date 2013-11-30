@@ -5,15 +5,15 @@ import org.specs2.specification.Scope
 
 object CabinSpec extends Specification {
 
-  val MaxFloor = 19
+  val HigherFloor = 19
   val MaxCabinSize = 100
 
-  class WithCabin(lowerFloor: Int = 0, higherFloor: Int = MaxFloor, index: Int = 0, size: Int = MaxCabinSize, floor: Int = 0) extends Scope {
+  class WithCabin(lowerFloor: Int = 0, higherFloor: Int = HigherFloor, index: Int = 0, size: Int = MaxCabinSize, floor: Int = 0) extends Scope {
     val cabin = Cabin(index, lowerFloor, higherFloor, size)
     cabin.floor = floor
   }
 
-  def resetCabin(lowerFloor: Int, higherFloor: Int = MaxFloor, index: Int = 0) = {
+  def resetCabin(lowerFloor: Int, higherFloor: Int = HigherFloor, index: Int = 0) = {
     val cabin = new Cabin(index, lowerFloor, higherFloor, MaxCabinSize)
     cabin.floor = lowerFloor
     cabin
@@ -36,7 +36,7 @@ object CabinSpec extends Specification {
 
     "check if is at top floor" in new WithCabin {
       cabin.isAtTop must beFalse
-      cabin.floor = MaxFloor
+      cabin.floor = HigherFloor
       cabin.isAtTop must beTrue
     }
 
@@ -59,7 +59,7 @@ object CabinSpec extends Specification {
     "check if needs to change current direction" in new WithCabin(lowerFloor = -3, floor = 1) {
       cabin.direction = UP
       cabin.needsToInverseDirection() must beFalse
-      cabin.floor = MaxFloor
+      cabin.floor = HigherFloor
       cabin.needsToInverseDirection() must beTrue
       cabin.direction = DOWN
       cabin.floor = 0
@@ -80,6 +80,22 @@ object CabinSpec extends Specification {
       cabin.isDoorClosed must beTrue
       cabin.door = Door.OPEN
       cabin.isDoorClosed must beFalse
+    }
+
+    "check if remains travelers in current direction" in new WithCabin(floor = 5) {
+      cabin.direction = UP
+      cabin.travelers.addTraveler(1, 4)
+      cabin.travelers.addTraveler(1, 3)
+      cabin.travelers.addTraveler(0, 4)
+      cabin.remainsTravelersInCurrentDirection() must beFalse
+
+      cabin.direction = DOWN
+      cabin.remainsTravelersInCurrentDirection() must beTrue
+
+      cabin.direction = UP
+      cabin.travelers.addTraveler(6, 8)
+      cabin.travelers.addTraveler(10, 12)
+      cabin.remainsTravelersInCurrentDirection() must beTrue
     }
 
     "can do nothing when at middle floor" in new WithCabin {

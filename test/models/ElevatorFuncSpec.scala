@@ -45,7 +45,7 @@ object ElevatorFuncSpec extends Specification {
       elevator.call(4, UP)
       nextCommand() must be equalTo("DOWN")
       nextCommand() must be equalTo("DOWN")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       elevator.userHasEntered(0)
       elevator.go(0, 6)
       nextCommand() must be equalTo("CLOSE")
@@ -60,7 +60,7 @@ object ElevatorFuncSpec extends Specification {
       nextCommand() must be equalTo("DOWN")
       nextCommand() must be equalTo("DOWN")
       nextCommand() must be equalTo("DOWN")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       elevator.go(0, 4)
       nextCommand() must be equalTo("UP")
@@ -72,7 +72,7 @@ object ElevatorFuncSpec extends Specification {
       elevator.call(6, UP)
       nextCommand() must be equalTo("DOWN")
       nextCommand() must be equalTo("DOWN")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       nextCommand() must be equalTo("UP")
     }
@@ -84,7 +84,7 @@ object ElevatorFuncSpec extends Specification {
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
       firstCabin.floor must be equalTo(17)
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       nextCommand() must be equalTo("DOWN")
     }
@@ -93,7 +93,7 @@ object ElevatorFuncSpec extends Specification {
       elevator.call(atFloor = 10, UP)
       elevator.call(atFloor = 10, DOWN)
 
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       elevator.userHasEntered(0)
       elevator.go(0, 12)
       elevator.userHasEntered(0)
@@ -109,11 +109,11 @@ object ElevatorFuncSpec extends Specification {
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
       firstCabin.floor must be equalTo(17)
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       nextCommand() must be equalTo("UP")
       firstCabin.floor must be equalTo(18)
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       nextCommand() must be equalTo("DOWN")
     }
@@ -121,12 +121,12 @@ object ElevatorFuncSpec extends Specification {
     "force direction to middle when no another call or go in current direction" in new WithElevator(5) {
       elevator.call(atFloor = 4, UP)
       nextCommand() must be equalTo("DOWN")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       elevator.userHasEntered(0)
       elevator.go(0, 5)
       nextCommand() must be equalTo("CLOSE")
       nextCommand() must be equalTo("UP")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
@@ -144,7 +144,7 @@ object ElevatorFuncSpec extends Specification {
       elevator.go(0, 3)
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       firstCabin.travelers.size must be equalTo(0)
       nextCommand() must be equalTo("UP")
@@ -156,7 +156,7 @@ object ElevatorFuncSpec extends Specification {
       elevator.call(atFloor = 3, UP)
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       elevator.userHasEntered(0)
       elevator.go(0, 6)
       nextCommand() must be equalTo("CLOSE")
@@ -170,7 +170,7 @@ object ElevatorFuncSpec extends Specification {
       elevator.call(atFloor = 3, DOWN)
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       elevator.userHasEntered(0)
       elevator.go(0, 1)
       nextCommand() must be equalTo("CLOSE")
@@ -184,7 +184,7 @@ object ElevatorFuncSpec extends Specification {
       elevator.call(atFloor = 8, UP)
       nextCommand() must be equalTo("DOWN")
       nextCommand() must be equalTo("DOWN")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       elevator.userHasEntered(0)
       elevator.go(0, 11)
       nextCommand() must be equalTo("CLOSE")
@@ -192,7 +192,7 @@ object ElevatorFuncSpec extends Specification {
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       nextCommand() must be equalTo("DOWN")
     }
@@ -205,14 +205,14 @@ object ElevatorFuncSpec extends Specification {
 
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       elevator.userHasEntered(0)
       elevator.go(0, 5)
       nextCommand() must be equalTo("CLOSE")
       firstCabin.waiters.size must be equalTo(0)
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       firstCabin.travelers.size must be equalTo(0)
     }
@@ -227,7 +227,7 @@ object ElevatorFuncSpec extends Specification {
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       nextCommand() must be equalTo("DOWN")
       firstCabin.travelers.size must be equalTo(0)
@@ -241,7 +241,7 @@ object ElevatorFuncSpec extends Specification {
 
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       elevator.userHasEntered(0)
       elevator.go(0, 2)
       nextCommand() must be equalTo("CLOSE")
@@ -250,7 +250,7 @@ object ElevatorFuncSpec extends Specification {
       nextCommand() must be equalTo("DOWN")
       nextCommand() must be equalTo("DOWN")
       nextCommand() must be equalTo("DOWN")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       elevator.userHasEntered(0)
       elevator.go(0, 5)
       nextCommand() must be equalTo("CLOSE")
@@ -268,12 +268,12 @@ object ElevatorFuncSpec extends Specification {
       firstCabin.waiters.size must be equalTo(1)
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       firstCabin.travelers.size must be equalTo(0)
       nextCommand() must be equalTo("DOWN")
       nextCommand() must be equalTo("DOWN")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       elevator.userHasEntered(0)
       elevator.go(0, 10)
       nextCommand() must be equalTo("CLOSE")
@@ -288,16 +288,16 @@ object ElevatorFuncSpec extends Specification {
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
       nextCommand() must be equalTo("UP")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       nextCommand() must be equalTo("DOWN")
       nextCommand() must be equalTo("DOWN")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       elevator.userHasEntered(0)
       elevator.go(0, 7)
       nextCommand() must be equalTo("CLOSE")
       nextCommand() must be equalTo("UP")
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
     }
 
@@ -311,7 +311,7 @@ object ElevatorFuncSpec extends Specification {
 
       nextCommand() must be equalTo("UP") // go to 6
       firstCabin.travelers.size must be equalTo(10)
-      nextCommand() must be equalTo("OPEN") // one traveler leaves
+      nextCommand() must be contain("OPEN") // one traveler leaves
       elevator.userHasEntered(0)
       elevator.go(0, 7) // one new enters
       nextCommand() must be equalTo("CLOSE")
@@ -319,20 +319,20 @@ object ElevatorFuncSpec extends Specification {
       nextCommand() must be equalTo("UP") // go to 7
       firstCabin.travelers.size must be equalTo(10)
 
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       firstCabin.travelers.size must be equalTo(8) // two travelers left
 
       nextCommand() must be equalTo("UP") // go to 8
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       firstCabin.travelers.size must be equalTo(7)
       nextCommand() must be equalTo("UP") // go to 9
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       firstCabin.travelers.size must be equalTo(6)
       nextCommand() must be equalTo("UP") // go to 10
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       firstCabin.travelers.size must be equalTo(5)
 
@@ -340,25 +340,25 @@ object ElevatorFuncSpec extends Specification {
       nextCommand() must be equalTo("DOWN")
       nextCommand() must be equalTo("DOWN")
       nextCommand() must be equalTo("DOWN") // floor 6
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       elevator.userHasEntered(0)
       elevator.go(0, 0)
       nextCommand() must be equalTo("CLOSE")
       nextCommand() must be equalTo("DOWN") // floor 5
       nextCommand() must be equalTo("DOWN") // floor 4
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       nextCommand() must be equalTo("DOWN") // floor 3
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       nextCommand() must be equalTo("DOWN") // floor 2
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       nextCommand() must be equalTo("DOWN") // floor 1
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       nextCommand() must be equalTo("DOWN") // floor 0
-      nextCommand() must be equalTo("OPEN")
+      nextCommand() must be contain("OPEN")
       nextCommand() must be equalTo("CLOSE")
       firstCabin.isEmpty() must beTrue
       nextCommand() must be equalTo("UP") // go to middle

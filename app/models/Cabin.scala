@@ -32,6 +32,12 @@ case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, 
 
   def isFull() = travelers.size == size
 
+  def remainsTravelersInCurrentDirection(): Boolean = {
+    val remainsTravelers = travelers.users.count(t => if (direction == UP) t.toFloor > floor else floor > t.toFloor) > 0
+    Logger.debug(s"Travelers in current direction $remainsTravelers")
+    remainsTravelers
+  }
+
   def beforeNextCommand() = {
     travelers.onNextCommand(floor)
   }

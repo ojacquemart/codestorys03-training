@@ -34,7 +34,8 @@ object OpenCommand extends Command {
   def to(cabin: Cabin): String = {
     if (cabin.door == Door.CLOSE) {
       cabin.door = Door.OPEN
-      "OPEN"
+      if (cabin.remainsTravelersInCurrentDirection()) s"OPEN_${cabin.direction}"
+      else "OPEN"
     }
     else NothingCommand.to(cabin)
   }
