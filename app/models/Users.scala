@@ -6,7 +6,7 @@ import play.api.Logger
 
 case class StopAt(cabin: Int, floor: Int, to: Direction)
 
-class Users {
+class Users extends Reset {
 
   var users: ArrayBuffer[User] = emptyMutableUsers
 
@@ -88,6 +88,8 @@ class Users {
       .sortBy(_._1)
       .map(u => UserByFloor(u._1, u._2))
   }
+
+  def reset = users = emptyMutableUsers
 
 }
 

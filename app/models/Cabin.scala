@@ -32,7 +32,7 @@ case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, 
 
   def isFull() = travelers.size == size
 
-  def onNextCommand() = {
+  def beforeNextCommand() = {
     travelers.onNextCommand(floor)
   }
 

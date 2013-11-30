@@ -1,6 +1,8 @@
 package models
 
 import play.api.libs.json.Json
+import play.api.Logger
+import scala.collection.mutable.ArrayBuffer
 
 case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: Int, val cabinCount: Int) {
 
@@ -10,6 +12,7 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   val cabins = (0 until cabinCount).toList.map {
     i => new Cabin(i, lowerFloor, higherFloor, cabinSize)
   }
+  
 
   // visible for test
   def callAndGo(atFloor: Int, toFloor: Int, cabin: Int, direction: Direction = UP) = {
@@ -18,15 +21,10 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   }
 
   def call(atFloor: Int, direction: Direction) {
-    val (emptyCabins, nonEmptyCabins) = cabins.partition(_.travelers.isEmpty)
-    if (emptyCabins.size > 0) addWaiterToNearestCabin(emptyCabins, atFloor, direction)
-    else addWaiterToNearestCabin(nonEmptyCabins, atFloor, direction)
+    val organizer = WaitersOrganizer(this)
+    organizer.singleOrganize(atFloor, direction)
   }
 
-  def addWaiterToNearestCabin(cabins: List[Cabin], floor: Int, to: Direction) = {
-    val nearestCabin = cabins.minBy(c => Math.abs(c.floor - floor))
-    nearestCabin.waiters.addWaiter(floor, to)
-  }
 
   def userHasEntered(cabinIndex: Int) = {
     val cabin = cabins(cabinIndex)
@@ -41,12 +39,23 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
 
   def onUserExited {}
 
-  def nextCommands(): String = {
+  def beforeNextCommands() = {
     hits += 1
-    cabins.foreach(_.onNextCommand())
-
-    cabins.map(c => c.nextCommand()).mkString("\n")
+    cabins.foreach(_.beforeNextCommand())
   }
+  
+  def nextCommands(): String = {
+    beforeNextCommands()
+    val nextCommands = cabins.map(c => c.nextCommand()).mkString("\n")
+    afterNextCommands()
+
+    nextCommands
+  }
+
+  def afterNextCommands() = {
+    WaitersOrganizer(this).organize()
+  }
+
 
   def getStatus: String = Json.toJson(ElevatorRecap.get(this)).toString
 
@@ -55,4 +64,41 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
 object Elevator {
 
   def empty() = new Elevator(0, 0, 0, 0)
+}
+
+class WaitersOrganizer(val cabins: List[Cabin]) {
+
+  def organize(): Unit = {
+    val allWaiters = cabins.flatMap(_.waiters.users)
+    Logger.debug(s"Let's tidy ${allWaiters.size} waiters")
+
+    cabins.foreach(_.waiters.reset())
+    val targetableCabins = getTargetableCabins()
+    allWaiters.foreach(w => {
+      organize(targetableCabins, w.fromFloor, w.direction)
+    })
+  }
+
+  def singleOrganize(floor: Int, to: Direction): Unit = {
+    organize(getTargetableCabins(), floor, to)
+  }
+
+  def organize(cabins: List[Cabin], floor: Int, to: Direction): Unit = {
+    val nearestCabin = cabins.minBy(c => Math.abs(c.floor - floor))
+    nearestCabin.waiters.addWaiter(floor, to)
+  }
+
+  def getTargetableCabins(): List[Cabin] = {
+    val (emptyCabins, nonEmptyCabins) = cabins.partition(_.travelers.isEmpty)
+    if (emptyCabins.size > 0) emptyCabins
+    else nonEmptyCabins
+  }
+
+}
+
+object WaitersOrganizer {
+
+  def apply(elevator: Elevator) = {
+    new WaitersOrganizer(elevator.cabins)
+  }
 }
