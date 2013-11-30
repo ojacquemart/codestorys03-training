@@ -22,16 +22,35 @@ object ElevatorRecap {
 
 case class ElevatorStatus(
   hits: Int,
+  lowerFloor: Int,
+  higherFloor: Int,
+  cabinSize: Int,
+  cabinCount: Int,
   cabinsStatus: List[CabinStatus])
+
+object ElevatorStatus {
+
+  import ElevatorRecap._
+  implicit val writer = Json.writes[ElevatorStatus]
+
+  def get(elevator: Elevator) = {
+    val cabinsStatus = elevator.cabins.map(c => CabinStatus.get(c))
+    new ElevatorStatus(
+      elevator.hits,
+      elevator.lowerFloor,
+      elevator.higherFloor,
+      elevator.cabinSize,
+      elevator.cabinCount,
+      cabinsStatus)
+  }
+
+}
 
 case class CabinStatus(
    index: Int,
    floor: Int,
-   cabinSize: Int,
    door: String,
    direction: String,
-   lowerFloor: Int,
-   higherFloor: Int,
    middleFloor: Int,
    usersStatus: UsersStatus)
 
@@ -41,10 +60,8 @@ object CabinStatus {
     new CabinStatus(
       cabin.index,
       cabin.floor,
-      cabin.size,
       cabin.door.toString,
       cabin.direction.toString,
-      cabin.lowerFloor, cabin.higherFloor,
       cabin.middleFloor,
       UsersStatus.get(cabin))
   }
@@ -67,18 +84,6 @@ object UsersStatus {
       cabin.travelersByFloor
     )
   }
-}
-
-object ElevatorStatus {
-
-  import ElevatorRecap._
-  implicit val writer = Json.writes[ElevatorStatus]
-
-  def get(elevator: Elevator) = {
-    val cabinsStatus = elevator.cabins.map(c => CabinStatus.get(c))
-    new ElevatorStatus(elevator.hits, cabinsStatus)
-  }
-
 }
 
 case class SimpleReset(
