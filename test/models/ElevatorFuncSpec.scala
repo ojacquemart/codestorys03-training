@@ -364,5 +364,20 @@ object ElevatorFuncSpec extends Specification {
       nextCommand() must be equalTo("UP") // go to middle
     }
 
+    "only take waiters in the same direction"  in new WithElevator(5) {
+      elevator.call(6, DOWN)
+      elevator.call(6, DOWN)
+      elevator.call(6, UP)
+      elevator.call(6, UP)
+      nextCommand() must be equalTo("UP")
+      nextCommand() must contain("OPEN")
+      elevator.userHasEntered(0)
+      elevator.go(0, 10)
+      elevator.userHasEntered(0)
+      elevator.go(0, 12)
+      nextCommand() must be equalTo("CLOSE")
+      nextCommand() must be equalTo("UP")
+    }
+
   }
 }

@@ -23,9 +23,12 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   }
 
 
-  def userHasEntered(cabinIndex: Int) = {
+  def userHasEntered(cabinIndex: Int): Unit = {
     val cabin = cabins(cabinIndex)
-    val maybeWaiter = cabin.waiters.users.find(w => w.fromFloor == cabin.floor)
+    cabin.removeHeadWaiter()
+  }
+
+  def removeWaiter(cabin: Cabin, maybeWaiter: Option[User]) = {
     if (maybeWaiter.isDefined) cabin.waiters.users -= maybeWaiter.get
   }
 

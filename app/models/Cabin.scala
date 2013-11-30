@@ -38,6 +38,20 @@ case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, 
     remainsTravelers
   }
 
+  def removeHeadWaiter(): Unit = {
+    def removeMaybeWaiter(maybeWaiter: Option[User]) = {
+      if (maybeWaiter.isDefined) waiters.users -= maybeWaiter.get
+    }
+
+    val waitersAtFloor = waiters.users.filter(_.fromFloor == floor)
+    if (waitersAtFloor.size > 1) {
+      // More than one waiter at the floor, just take the first in the current direction
+      removeMaybeWaiter(waitersAtFloor.find(_.direction == direction))
+    } else {
+      removeMaybeWaiter(waiters.users.find(_.fromFloor == floor))
+    }
+  }
+
   def beforeNextCommand() = {
     travelers.onNextCommand(floor)
   }
@@ -64,7 +78,7 @@ case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, 
     val stopForTravelers = canStopForTravelers()
     val canStop = stopForTravelers || canStopForWaiters()
     if (canStop) {
-      if (canStopForTravelers()) {
+      if (stopForTravelers) {
         Logger.debug(s"CABIN $index - Stop travelers and update points")
         travelers.stopTravelersAt(floor)
       }
@@ -81,7 +95,7 @@ case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, 
 
   def canStopForWaiters() = {
     val canStopForWaiters = hasWaitersAtInDirection() && remainsPlaceForNewTravelers()
-    Logger.debug(s"CABIN $index - an stop for waiters at $floor to $direction: $canStopForWaiters")
+    Logger.debug(s"CABIN $index - can stop for waiters at $floor to $direction: $canStopForWaiters")
 
     canStopForWaiters
   }
