@@ -18,8 +18,6 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   }
 
   def userHasEntered(cabinIndex: Int): Unit = {
-    val cabin = cabins(cabinIndex)
-    cabin.removeHeadWaiter()
   }
 
   def removeWaiter(cabin: Cabin, maybeWaiter: Option[User]) = {
@@ -28,6 +26,7 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
 
   def go(cabinIndex: Int, toFloor: Int) {
     val cabin = cabins(cabinIndex)
+    cabin.removeHeadWaiter()
     cabin.travelers.addTraveler(cabin.floor, toFloor)
   }
 
@@ -40,7 +39,7 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   
   def nextCommands(): String = {
     beforeNextCommands()
-    if (hits > 2) {
+    if (hits > 4) {
       val nextCommands = cabins.map(c => c.nextCommand()).mkString("\n")
       afterNextCommands()
 
