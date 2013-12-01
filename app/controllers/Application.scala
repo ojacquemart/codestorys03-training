@@ -62,9 +62,10 @@ object Application extends Controller {
 
   def nextCommands = Action {
     this.synchronized {
+      Logger.info(s"@@@ START NEXT COMMANDS")
       val nextCommands = elevator.nextCommands()
-      Logger.info(s"@@@ NEXT COMMANDS: ${nextCommands}")
-      Logger.info(s"@@@ NEXT COMMAND, debug: ${elevator.getStatus}")
+      Logger.info(s"@@@ NEXT COMMANDS: ${nextCommands.mkString(" ")}")
+      Logger.info(s"@@@ END NEXT COMMAND: ${elevator.getStatus}")
 
       Ok(nextCommands)
     }
