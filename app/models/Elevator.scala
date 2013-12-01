@@ -40,10 +40,12 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
   
   def nextCommands(): String = {
     beforeNextCommands()
-    val nextCommands = cabins.map(c => c.nextCommand()).mkString("\n")
-    afterNextCommands()
+    if (hits > 2) {
+      val nextCommands = cabins.map(c => c.nextCommand()).mkString("\n")
+      afterNextCommands()
 
-    nextCommands
+      nextCommands
+    } else List("NOTHING", "NOTHING").mkString("\n")
   }
 
   def afterNextCommands() = {
