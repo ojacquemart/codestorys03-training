@@ -13,6 +13,8 @@ object ElevatorFuncSpec extends Specification {
   class WithElevator(floor: Int = 0, cabinSize: Int = MaxCabinSize) extends Scope {
     Logger.debug("Elevator initialization")
     val elevator = new Elevator(0, MaxFloor, cabinSize, 1)
+    elevator.hits = 10
+    
     firstCabin.floor = floor
 
     def firstCabin() = elevator.cabins(0)

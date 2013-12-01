@@ -38,24 +38,6 @@ case class Cabin(val index: Int = 0, var lowerFloor: Int, var higherFloor: Int, 
     remainsTravelers
   }
 
-  def removeHeadWaiter(): Unit = {
-    def removeMaybeWaiter(maybeWaiter: Option[User]) = {
-      if (maybeWaiter.isDefined) waiters.users -= maybeWaiter.get
-    }
-
-    val waitersAtFloor = waiters.users.filter(_.fromFloor == floor)
-    if (waitersAtFloor.size > 1) {
-      // More than one waiter at the floor, just take the first in the current direction
-      val waitersAtFloorInCurrentDirection = waitersAtFloor.filter(_.direction == direction)
-      if (waitersAtFloorInCurrentDirection.size > 0) {
-        removeMaybeWaiter(waitersAtFloorInCurrentDirection.find(_.direction == direction))
-      } else {
-        removeMaybeWaiter(waitersAtFloor.find(_.fromFloor == floor))
-      }
-    } else {
-      removeMaybeWaiter(waiters.users.find(_.fromFloor == floor))
-    }
-  }
 
   def beforeNextCommand() = {
     travelers.onNextCommand(floor)

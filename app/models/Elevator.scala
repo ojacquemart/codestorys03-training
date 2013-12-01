@@ -2,6 +2,8 @@ package models
 
 import play.api.libs.json.Json
 import play.api.Logger
+import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
 
 case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: Int, val cabinCount: Int) {
 
@@ -26,8 +28,32 @@ case class Elevator(val lowerFloor: Int, val higherFloor: Int, val cabinSize: In
 
   def go(cabinIndex: Int, toFloor: Int) {
     val cabin = cabins(cabinIndex)
-    cabin.removeHeadWaiter()
     cabin.travelers.addTraveler(cabin.floor, toFloor)
+
+    cabins.foreach(removeHeadWaiter(_))
+  }
+
+  def removeHeadWaiter(cabin: Cabin): Unit = {
+    val waiters = cabin.waiters.users
+
+    def removeMaybeWaiter(maybeWaiter: Option[User]) = {
+      if (maybeWaiter.isDefined) {
+        waiters -= maybeWaiter.get
+      }
+    }
+
+    val waitersAtFloor = waiters.filter(_.fromFloor == cabin.floor)
+    if (waitersAtFloor.size > 1) {
+      // More than one waiter at the floor, just take the first in the current direction
+      val waitersAtFloorInCurrentDirection = waitersAtFloor.filter(_.direction == cabin.direction)
+      if (waitersAtFloorInCurrentDirection.size > 0) {
+        removeMaybeWaiter(waitersAtFloorInCurrentDirection.find(_.direction == cabin.direction))
+      } else {
+        removeMaybeWaiter(waitersAtFloor.find(_.fromFloor == cabin.floor))
+      }
+    } else {
+      removeMaybeWaiter(waiters.find(_.fromFloor == cabin.floor))
+    }
   }
 
   def userHasExited {}

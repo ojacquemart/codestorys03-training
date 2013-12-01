@@ -109,21 +109,6 @@ object CabinSpec extends Specification {
       cabin.canStop must beFalse
     }
 
-    "remove head waiter" in new WithCabin(floor = 6) {
-      cabin.direction = UP
-      cabin.waiters.addWaiter(6, UP)
-      cabin.waiters.addWaiter(6, DOWN)
-      cabin.waiters.addWaiter(6, UP)
-      cabin.removeHeadWaiter()
-      cabin.removeHeadWaiter()
-      cabin.waiters.size must be equalTo(1)
-      cabin.waiters.users.head.direction must be equalTo(DOWN)
-
-      cabin.direction = DOWN
-      cabin.removeHeadWaiter()
-      cabin.waiters.size must be equalTo(0)
-    }
-
     "stop when has travelers or waiters in a direction at a floor" in new WithCabin {
       cabin.travelers.addTraveler(10, 0)
       cabin.travelers.addTraveler(0, 2)
